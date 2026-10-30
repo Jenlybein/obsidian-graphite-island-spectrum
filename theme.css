@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Graphite Island · Spectrum — Obsidian Theme
  * 石墨岛 · 光谱 —— 从同名 Typora 主题迁移的 Obsidian 主题。
  *
@@ -656,17 +656,17 @@ body {
     /* --- 侧栏 / 导航 --- */
     --nav-item-color:              var(--bb-ink-soft);
     --nav-item-color-hover:        var(--bb-ink);
-    --nav-item-color-active:       var(--bb-ink);
+    --nav-item-color-active:       var(--bb-invert-ink);
     --nav-item-color-selected:     var(--bb-invert-ink);
     --nav-item-background-hover:   var(--bb-paper);
-    --nav-item-background-active:  var(--bb-hover);
+    --nav-item-background-active:  var(--bb-invert-bg);
     --nav-item-background-selected: var(--bb-invert-bg);
     --nav-item-radius:             var(--bb-radius-xs);
     --nav-item-padding:            4px 8px;
     --nav-item-size:               14px;
     --nav-item-weight:             400;
     --nav-item-weight-hover:       600;
-    --nav-item-weight-active:      600;
+    --nav-item-weight-active:      700;
     --nav-item-white-space:        nowrap;
     --nav-heading-color:           var(--bb-ink-muted);
     --nav-heading-color-hover:     var(--bb-ink);
@@ -1834,12 +1834,8 @@ input:focus-visible {
    15 · Obsidian 外壳：侧栏 / 丝带 / 标签页 / 状态栏
    绘图台是雾灰的，纸面是云白的，页脚整条石墨——与 Typora 版一致。
    ===================================================================== */
-.workspace-ribbon,
-.workspace-ribbon.mod-left.is-collapsed,
-.workspace-ribbon.mod-right.is-collapsed {
-    background-color: var(--bb-mist) !important;
-    border-color: var(--bb-line);
-}
+/* 丝带：颜色全部由 --ribbon-background / --ribbon-background-collapsed 提供，
+   这里不写规则——用户改一个变量就能覆盖（官方主题指南也建议少用 !important）。 */
 
 .side-dock-ribbon-action,
 .workspace-ribbon .clickable-icon {
@@ -1884,22 +1880,21 @@ body .workspace-tab-header-container .workspace-tab-header:hover {
     background-color: var(--bb-canvas);
 }
 
-/* 状态栏：整条石墨，云白字 */
+/* 状态栏：整条石墨，云白字。
+   背景 / 文字 / 边框全部走 --status-bar-* 变量，这里只补字体与字距，
+   不用 !important，方便主题片段覆盖。 */
 .status-bar {
-    background-color: var(--bb-invert-bg) !important;
-    color: var(--bb-invert-ink) !important;
-    border-top: 0 !important;
     font-family: var(--bb-font);
     font-size: 12px;
     letter-spacing: 0.04em;
 }
 
 .status-bar-item {
-    color: var(--bb-footer-ink) !important;
+    color: var(--bb-footer-ink);
 }
 
 .status-bar-item.mod-clickable:hover {
-    color: var(--bb-amber) !important;
+    color: var(--bb-amber);
 }
 
 .status-bar ::selection {
@@ -1930,19 +1925,13 @@ body .workspace-tab-header-container .workspace-tab-header:hover {
     color: var(--bb-ink) !important;
 }
 
+/* 文件树：hover / 选中的颜色由 --nav-item-* 变量提供（见第 2 节），
+   这里只调字重，避免和用户片段打架。 */
 .nav-file-title.is-active,
 .nav-file-title.is-selected,
 .tree-item-self.is-active,
 .tree-item-self.is-selected {
-    background-color: var(--bb-invert-bg) !important;
-    color: var(--bb-invert-ink) !important;
     font-weight: 700;
-}
-
-.nav-file-title.is-active .tree-item-inner,
-.nav-file-title.is-selected .tree-item-inner,
-.tree-item-self.is-selected .tree-item-inner {
-    color: var(--bb-invert-ink) !important;
 }
 
 .nav-folder-title-content,
@@ -2118,12 +2107,12 @@ button.mod-destructive {
 }
 
 .suggestion-highlight {
-    color: var(--bb-clay) !important;
+    color: var(--bb-clay);
     font-weight: 700;
 }
 
 .suggestion-item.is-selected .suggestion-highlight {
-    color: var(--bb-invert-ink) !important;
+    color: var(--bb-invert-ink);
     text-decoration: underline;
 }
 
