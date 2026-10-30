@@ -1,4 +1,4 @@
-﻿# Graphite Island Spectrum · an Obsidian theme
+# Graphite Island Spectrum · an Obsidian theme
 
 > The Typora theme of the same name, ported to Obsidian — sheet of paper on a drafting board,
 > six warm hues for six heading levels, geometry instead of ornament.
