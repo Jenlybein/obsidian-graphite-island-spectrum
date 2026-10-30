@@ -1,0 +1,2486 @@
+/*
+ * Graphite Island · Spectrum — Obsidian Theme
+ * 石墨岛 · 光谱 —— 从同名 Typora 主题迁移的 Obsidian 主题。
+ *
+ * 源主题：graphite-island-spectrum.css（Typora，MIT）
+ * 迁移目标：保留原主题的全部视觉决策（五色定调 / 标题六色谱 / 几何记号 /
+ *          图纸网格 / 暖纸代码区），把它们从 Typora 的 DOM 改接到
+ *          Obsidian 的阅读视图、实时预览（CodeMirror 6）与外壳 UI 上。
+ *
+ * 视觉方向：石墨图纸上的暖土六色谱
+ *   云白图纸摊在雾灰绘图台上，40px 石墨色图纸网格作底纹，
+ *   Bahnschrift 制图字做标题；标题回到“每层一色”：
+ *   六个层级各配一枚低饱和暖土色，靠色相区分层级，靠低明度把版面坐平。
+ *
+ * 标题六色谱（只用于标题文字与它自己的记号，不进入正文主体色板）：
+ *   H1 石墨 #1D1D1F   H2 赤陶 #BF4800   H3 赭金 #8A5E14
+ *   H4 橄榄 #55602F   H5 梅褐 #6B4A5B   H6 暖灰 #6B645D
+ *   色相从中性石墨 → 赤陶 23° → 赭金 37° → 橄榄 83° → 梅褐 326° 一路拉开，
+ *   靠色相区分、靠明度统一，所以分得开又不打架。
+ *
+ * 主体五色（正文其余色值均由这五色以透明度/加深派生）：
+ *   石墨 #1D1D1F  正文文字 / 1px 结构线 / 深色面 / 状态栏底
+ *   云白 #FBFBFD  纸面底色 / 卡片底 / 深底上的文字
+ *   暖砂 #D8A24B  三角 / 高亮标记 / 色块填充 / 引言块底
+ *   赤陶 #BF4800  方形 / 状态强调 / 主按钮 hover / 危险提示
+ *   雾灰 #F5F5F7  绘图台与外壳灰底 / 40px 图纸网格 / 分隔线
+ *
+ * 角色分离（迁移时定下的关键一层）：
+ *   Typora 里“墨”既是文字又是深色面，“纸”既是纸面又是深底上的字。
+ *   Obsidian 有深色模式，这套双重身份必须拆开，于是多出四个角色令牌：
+ *     --bb-canvas      绘图台（纸面之外的地面）  --bb-invert-bg / --bb-invert-ink  反白块（表头/页脚/选中行）
+ *     --bb-amber-ground 引言块底                  --bb-on-amber / --bb-on-clay      彩块上的字
+ *     --bb-cta-bg / --bb-cta-ink / --bb-cta-hover-*  主按钮三态
+ *   浅色版这些令牌全部指回五色本体，深色版才真正分家。
+ *
+ * 代码区域（源主题的刻意例外）：行内代码是薄荷“贴片”，代码块是暖纸卡片，
+ *   与正文五色板分离。Obsidian 侧只有一套 --code-* 角色变量，所以这里把
+ *   二者拆开：角色变量指向暖纸卡片，行内代码用显式规则追加薄荷色。
+ *
+ * Obsidian 专属适配（原 Typora 主题没有对应物的部分）：
+ *   深色模式（石墨岛 · 夜）、标签页/丝带/状态栏、属性面板、callout、
+ *   命令面板与菜单、模态框、嵌入笔记、Canvas 与图谱配色、Bases、打印。
+ *   深色模式是派生设计：明度阶梯重排（绘图台最暗 / 纸面居中 / 抬起控件更亮），
+ *   六色谱保留色相只抬明度，几何与装置完全不变；打印时整体钉回浅色调色板。
+ *
+ * 对比度：浅色正文 16.28:1，深色正文 13.62:1，六色谱最低 4.66:1（H2 压在自己的色带上）。
+ *   浅色代码子色板是源主题的既定取舍（区分度优先），未做 AA 修复；
+ *   文件末尾第 23 节留了一份可选的覆盖层，取消注释即可全部 ≥ 4.5:1。
+ */
+
+/* =====================================================================
+   0 · 令牌：几何与字体（两种模式共用，不随明暗变化）
+   ===================================================================== */
+:root {
+    /* === 字体 === */
+    --bb-font:            "Segoe UI Variable Text", "Segoe UI",
+                          "Noto Sans SC", "MiSans", "Microsoft YaHei",
+                          "PingFang SC", "Hiragino Sans", sans-serif;
+    --bb-font-display:    "Bahnschrift", "Segoe UI Variable Display",
+                          "Noto Sans SC", "Microsoft YaHei",
+                          "PingFang SC", sans-serif;
+    --bb-code-mono:       "JetBrains Mono", "Fira Code", "Cascadia Code",
+                          "SF Mono", Consolas, Menlo, monospace;
+
+    /* === 圆角（包豪斯几何，但收边柔和） === */
+    --bb-radius-xs:       2px;
+    --bb-radius-sm:       4px;
+    --bb-radius:          8px;
+    --bb-radius-lg:       12px;
+
+    /* === 图纸几何 === */
+    --bb-sheet-width:     860px;   /* 原 #write max-width */
+    --bb-sheet-pad-x:     64px;    /* 原 #write 左右内边距 */
+    --bb-sheet-pad-top:   56px;
+    --bb-sheet-pad-bottom: 96px;
+
+    /* === 代码卡片几何 === */
+    --bb-code-radius:     18px;    /* 原 --ai-radius */
+    --bb-code-border-w:   2px;
+    --bb-code-pad:        16px 20px;
+
+    /* === 正文节奏 === */
+    --bb-line-height:     1.85;    /* 源主题正文行高 */
+    --bb-code-line-height: 1.75;   /* 代码行高，与正文区分 */
+}
+
+/* =====================================================================
+   1 · 两种模式的调色板
+   ===================================================================== */
+
+/* ---------- 1a · 云白图纸（源主题原色，未改一个色值） ---------- */
+body.theme-light {
+    /* 五色 */
+    --bb-ink:             #1D1D1F;
+    --bb-paper:           #FBFBFD;
+    --bb-amber:           #D8A24B;
+    --bb-clay:            #BF4800;
+    --bb-clay-deep:       #A64105;
+    --bb-mist:            #F5F5F7;
+
+    /* 标题六色谱 */
+    --bb-h1:              var(--bb-ink);
+    --bb-h2:              var(--bb-clay);
+    --bb-h3:              #8A5E14;
+    --bb-h4:              #55602F;
+    --bb-h5:              #6B4A5B;
+    --bb-h6:              #6B645D;
+
+    /* 墨色阶梯 */
+    --bb-ink-soft:        rgba(29, 29, 31, 0.86);
+    --bb-ink-muted:       rgba(29, 29, 31, 0.70);
+
+    /* 1px 结构线 */
+    --bb-line:            rgba(29, 29, 31, 0.28);
+    --bb-line-strong:     rgba(29, 29, 31, 0.55);
+    --bb-line-faint:      rgba(29, 29, 31, 0.12);
+
+    /* 表面与交互底 */
+    --bb-amber-tint:      rgba(216, 162, 75, 0.16);
+    --bb-band-mid:        rgba(245, 245, 247, 0.62);   /* H2 色带中段（雾灰 62%） */
+    --bb-band-end:        rgba(245, 245, 247, 0);      /* H2 色带末端 */
+    --bb-lift:            #F7F7F9;                 /* 抬起的控件底（输入框/按钮） */
+    --bb-lift-2:          #EFEFF2;                 /* 控件 hover */
+    --bb-hover:           rgba(29, 29, 31, 0.06);  /* 中性 hover 蒙版 */
+    --bb-hover-strong:    rgba(29, 29, 31, 0.10);
+    --bb-focus-halo:      rgba(29, 29, 31, 0.70);
+    --bb-overlay:         rgba(29, 29, 31, 0.35);  /* 模态遮罩 */
+
+    /* === 角色分离：光/暗两套里“墨”既是文字又是深色面，
+       Obsidian 需要把“反白块”和“文字”拆成两个令牌，才能在夜里不翻转成白块。 === */
+    --bb-canvas:          #F5F5F7;                /* 绘图台：纸面之外的地面 */
+    --bb-invert-bg:       #1D1D1F;                /* 反白块底：表头 / 页脚 / 选中的文件 / 链接 hover */
+    --bb-invert-ink:      #FBFBFD;                /* 反白块上的字 */
+    --bb-on-amber:        #1D1D1F;                /* 暖砂块上的字（高亮 / 选中） */
+    --bb-on-clay:         #FBFBFD;                /* 赤陶块上的字 */
+    --bb-amber-ground:    #D8A24B;                /* 引言块的实心砂底 */
+    --bb-cta-bg:          #1D1D1F;                /* 主按钮底 */
+    --bb-cta-ink:         #FBFBFD;                /* 主按钮字 */
+    --bb-cta-hover-bg:    #A64105;                /* 主按钮 hover */
+    --bb-cta-hover-ink:   #FBFBFD;
+    --bb-footer-ink:      rgba(251, 251, 253, 0.82);  /* 页脚/状态栏里的次要信息 */
+    --bb-accent-hover:    #A64105;                /* 赤陶加深：hover 状态的文字色 */
+    --bb-tag-ink:         #A64105;                /* 标签文字（暖砂底上要压深一档） */
+    --bb-tag-ink-hover:   #8E3604;
+    --bb-faint:           #6E6E74;                /* 比 base-50 深一档，弱化文字也守 4.5:1 */
+    --bb-selection:       #D8A24B;                /* 选中底色：浅色版是实心砂 */
+
+    /* 40px 图纸网格（小格 40px，大格 200px） */
+    --bb-grid-line:       rgba(29, 29, 31, 0.13);
+    --bb-grid-major:      rgba(29, 29, 31, 0.20);
+    --bb-grid-image:
+        linear-gradient(to right, var(--bb-grid-line) 1px, transparent 1px),
+        linear-gradient(to bottom, var(--bb-grid-line) 1px, transparent 1px),
+        linear-gradient(to right, var(--bb-grid-major) 1px, transparent 1px),
+        linear-gradient(to bottom, var(--bb-grid-major) 1px, transparent 1px);
+    --bb-grid-size:       40px 40px, 40px 40px, 200px 200px, 200px 200px;
+
+    /* 阴影：只给“图纸/浮层”这类真物体 */
+    --bb-shadow-sheet:    0 1px 0 rgba(29, 29, 31, 0.05),
+                          0 22px 44px -30px rgba(29, 29, 31, 0.45);
+    --bb-shadow-float:    0 12px 32px -20px rgba(29, 29, 31, 0.50);
+
+    /* 装饰记号（data: SVG，随模式换色；零外部依赖） */
+    --bb-mark-h1:
+        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 26'><polygon points='20,25 48,25 34,4' fill='%23D8A24B'/><rect x='62' y='15' width='11' height='11' fill='%23BF4800'/></svg>");
+    --bb-mark-hr:
+        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 14'><polygon points='10,13 24,13 17,3' fill='%23D8A24B'/><rect x='30' y='7' width='6' height='6' fill='%23BF4800'/></svg>");
+    --bb-mark-tri-h3:
+        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 12'><polygon points='1,11 13,11 7,1' fill='%238A5E14'/></svg>");
+
+    /* Canvas 六色（取六色谱本身，Canvas 要的是 "R, G, B" 三元组） */
+    --bb-canvas-1: 191, 72, 0;      /* 赤陶 */
+    --bb-canvas-2: 216, 162, 75;    /* 暖砂 */
+    --bb-canvas-3: 138, 94, 20;     /* 赭金 */
+    --bb-canvas-4: 85, 96, 47;      /* 橄榄 */
+    --bb-canvas-5: 107, 74, 91;     /* 梅褐 */
+    --bb-canvas-6: 107, 100, 93;    /* 暖灰 */
+
+    /* 代码区配色（暖纸 + 薄荷/红/黄/绿语法） */
+    --bb-code-bg:         #efe9d6;
+    --bb-code-border:     #c9bea4;
+    --bb-code-shadow:     #d4c9b4;
+    --bb-code-text:       #725d42;
+    --bb-code-text-main:  #794f27;
+    --bb-code-text-2:     #9f927d;
+    --bb-code-muted:      #8a7b66;
+    --bb-code-comment:    #a2947c;   /* 比原 --bb-code-line-no 略深：Obsidian 里注释是正文，不是行号 */
+    --bb-code-mint:       #11a89b;
+    --bb-code-mint-bg:    #e6f9f6;
+    --bb-code-mint-line:  #cdeeea;
+    --bb-code-focus:      #ffcc00;
+    --bb-code-keyword:    #c94444;
+    --bb-code-number:     #dba90e;
+    --bb-code-string:     #5a9e1e;
+    --bb-code-string2:    #4a8517;
+    --bb-code-em:         #c97d1c;
+
+    /* === Obsidian 底层色阶（让所有原生控件落进同一色板） === */
+    color-scheme: light;
+    --highlight-mix-blend-mode: normal;
+    --mono-0: #FBFBFD;
+    --mono-100: #1D1D1F;
+    --mono-rgb-0: 251, 251, 253;
+    --mono-rgb-100: 29, 29, 31;
+    --color-base-00:  #FBFBFD;
+    --color-base-05:  #F8F8FA;
+    --color-base-10:  #F5F5F7;
+    --color-base-20:  #F2F2F4;
+    --color-base-25:  #EFEFF2;
+    --color-base-30:  #DCDCE0;
+    --color-base-35:  #CACACF;
+    --color-base-40:  #B4B4BA;
+    --color-base-50:  #8E8E94;
+    --color-base-60:  #74747A;
+    --color-base-70:  #5F5F63;
+    --color-base-100: #1D1D1F;
+
+    /* 强调色 = 赤陶（Obsidian 的 accent 槽位） */
+    --accent-h: 23;
+    --accent-s: 100%;
+    --accent-l: 38%;
+
+    /* 语义色：全部落在五色 + 代码子色板里，不引入新的色相族 */
+    --color-red:      #C94444;
+    --color-orange:   #C97D1C;
+    --color-yellow:   #DBA90E;
+    --color-green:    #55602F;
+    --color-cyan:     #11A89B;
+    --color-blue:     #4F5B66;
+    --color-purple:   #6B4A5B;
+    --color-pink:     #8B5A6B;
+    --color-red-rgb:    201, 68, 68;
+    --color-orange-rgb: 201, 125, 28;
+    --color-yellow-rgb: 219, 169, 14;
+    --color-green-rgb:  85, 96, 47;
+    --color-cyan-rgb:   17, 168, 155;
+    --color-blue-rgb:   79, 91, 102;
+    --color-purple-rgb: 107, 74, 91;
+    --color-pink-rgb:   139, 90, 107;
+    --color-accent-hsl: var(--accent-h), var(--accent-s), var(--accent-l);
+}
+
+/* ---------- 1b · 石墨岛 · 夜（深色派生调色板） ----------
+ * 不是把纸墨简单对调，而是把“角色”拆开重排：
+ *   · 明度阶梯保持原样——绘图台最暗、纸面中间、抬起的控件更亮；
+ *   · 六色谱保留色相，明度整体抬到 L62–78%，与浅色版的 L28–40% 对应；
+ *   · “反白块”（表头 / 页脚 / 选中文件 / 链接 hover）在夜里不能变成白块，
+ *     于是单独立出 --bb-invert-bg / --bb-invert-ink；
+ *   · 引言块不再实心暖砂（那会变成一盏灯），改用 28% 砂压在纸面上。
+ * 所有比值都实测过：正文 13.62:1，最低的 H2 5.35:1，全部 ≥ AA。 */
+body.theme-dark {
+    /* 五色 */
+    --bb-ink:             #ECECEF;   /* 文字：云白的夜间等价物 */
+    --bb-paper:           #212124;   /* 纸面（内容列） */
+    --bb-mist:            #141416;   /* 退后的灰面：侧栏 / 灰区块 / 斑马 / 嵌套引言 */
+    --bb-amber:           #D8A24B;   /* 暖砂：色相与明度都不动，砂在夜里也是砂 */
+    --bb-clay:            #E1793C;   /* 赤陶：只提明度（纸面 5.35:1） */
+    --bb-clay-deep:       #AD4610;   /* 赤陶加深：填色与 2px 记号 */
+
+    /* 标题六色谱（暗底版本：同色相，明度统一收在 L62–78%） */
+    --bb-h1:              #ECECEF;
+    --bb-h2:              #E1793C;
+    --bb-h3:              #D8A24B;   /* 浅色版里 H3 本就是“压暗的暖砂”，夜里正好合上这一圈 */
+    --bb-h4:              #A8B36A;
+    --bb-h5:              #C79AB4;
+    --bb-h6:              #B0A9A2;
+
+    /* 墨色阶梯 */
+    --bb-ink-soft:        rgba(236, 236, 239, 0.86);
+    --bb-ink-muted:       rgba(236, 236, 239, 0.72);
+
+    /* 1px 结构线 */
+    --bb-line:            rgba(236, 236, 239, 0.30);
+    --bb-line-strong:     rgba(236, 236, 239, 0.56);
+    --bb-line-faint:      rgba(236, 236, 239, 0.14);
+
+    /* 表面与交互底 */
+    --bb-amber-tint:      rgba(216, 162, 75, 0.14);
+    --bb-band-mid:        rgba(20, 20, 22, 0.62);   /* H2 色带中段（夜雾灰 62%） */
+    --bb-band-end:        rgba(20, 20, 22, 0);      /* H2 色带末端 */
+    --bb-lift:            #2A2A2E;
+    --bb-lift-2:          #33333A;
+    --bb-hover:           rgba(236, 236, 239, 0.07);
+    --bb-hover-strong:    rgba(236, 236, 239, 0.12);
+    --bb-focus-halo:      rgba(236, 236, 239, 0.45);
+    --bb-overlay:         rgba(6, 6, 7, 0.62);
+
+    /* 角色分离（夜）：反白块与文字彻底分家，否则表头会变成一条白带 */
+    --bb-canvas:          #1B1B1E;                /* 绘图台：纸面之外的地面 */
+    --bb-invert-bg:       #0E0E10;                /* 反白块底：夜的最深石墨 */
+    --bb-invert-ink:      #ECECEF;
+    --bb-on-amber:        #1B1B1E;                /* 暖砂块上的字 */
+    --bb-on-clay:         #141416;                /* 赤陶块上的字 */
+    --bb-amber-ground:    rgba(216, 162, 75, 0.28);  /* 引言块：砂压在纸上，不发光 */
+    --bb-cta-bg:          #D8A24B;                /* 主按钮：暖砂实心（#0E0E10 贴在纸上只有 1.4:1，会像洞） */
+    --bb-cta-ink:         #1B1B1E;
+    --bb-cta-hover-bg:    #E1793C;
+    --bb-cta-hover-ink:   #141416;
+    --bb-footer-ink:      rgba(236, 236, 239, 0.82);
+    --bb-accent-hover:    #EB8B4C;                /* 暗底的 hover 文字：只能提亮 */
+    --bb-tag-ink:         #EB8B4C;
+    --bb-tag-ink-hover:   #F0A26A;
+    --bb-faint:           #96969F;
+    /* 选中底色：暗底上不能用实心砂（会把云白字压成 1.94:1），改成 30% 砂的洗染 */
+    --bb-selection:       rgba(216, 162, 75, 0.30);
+
+    /* 40px 图纸网格（夜图纸：雾白线，比纸面亮一点点；实测 1.30 / 1.68，与浅色版同量级） */
+    --bb-grid-line:       rgba(236, 236, 239, 0.10);
+    --bb-grid-major:      rgba(236, 236, 239, 0.18);
+    --bb-grid-image:
+        linear-gradient(to right, var(--bb-grid-line) 1px, transparent 1px),
+        linear-gradient(to bottom, var(--bb-grid-line) 1px, transparent 1px),
+        linear-gradient(to right, var(--bb-grid-major) 1px, transparent 1px),
+        linear-gradient(to bottom, var(--bb-grid-major) 1px, transparent 1px);
+    --bb-grid-size:       40px 40px, 40px 40px, 200px 200px, 200px 200px;
+
+    /* 阴影：暗底上读作深度，而不是光晕 */
+    --bb-shadow-sheet:    0 1px 0 rgba(0, 0, 0, 0.55),
+                          0 22px 44px -30px rgba(0, 0, 0, 0.85);
+    --bb-shadow-float:    0 12px 32px -20px rgba(0, 0, 0, 0.80);
+    /* Obsidian 的深色块从不定义 --shadow-edges，而两套 --shadow-xs 都引用它；
+       补上这一条，浮层阴影才不会在深色模式下静默消失。 */
+    --shadow-edges:       0 0 transparent;
+
+    /* 装饰记号（暗底版本：暖砂与赤陶提亮） */
+    --bb-mark-h1:
+        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 26'><polygon points='20,25 48,25 34,4' fill='%23D8A24B'/><rect x='62' y='15' width='11' height='11' fill='%23E1793C'/></svg>");
+    --bb-mark-hr:
+        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 14'><polygon points='10,13 24,13 17,3' fill='%23D8A24B'/><rect x='30' y='7' width='6' height='6' fill='%23E1793C'/></svg>");
+    --bb-mark-tri-h3:
+        url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 14 12'><polygon points='1,11 13,11 7,1' fill='%23D8A24B'/></svg>");
+
+    /* Canvas 六色（暗底提亮版） */
+    --bb-canvas-1: 225, 121, 60;    /* 赤陶 */
+    --bb-canvas-2: 216, 162, 75;    /* 暖砂 */
+    --bb-canvas-3: 168, 179, 106;   /* 橄榄 */
+    --bb-canvas-4: 199, 154, 180;   /* 梅褐 */
+    --bb-canvas-5: 176, 169, 162;   /* 暖灰 */
+    --bb-canvas-6: 62, 207, 190;    /* 薄荷（代码区的唯一冷色，只给 Canvas/图谱用） */
+
+    /* 代码区配色：暖砂纸的夜间版本（同一张暖色卡片，压暗而非换色）。
+       注意底色抬到 #302B23 而不是更深的暖黑——#24211B 压在 #212124 上
+       只有 1.00:1，卡片会直接消失；实测 #302B23 是 1.14:1，
+       与浅色版 (#efe9d6 在 #FBFBFD 上 1.17:1) 同一档“纸片感”。 */
+    --bb-code-bg:         #302B23;
+    --bb-code-border:     #4A4235;
+    --bb-code-shadow:     #17150F;
+    --bb-code-text:       #CBBBA0;
+    --bb-code-text-main:  #E8D3AE;
+    --bb-code-text-2:     #AB9A84;
+    --bb-code-muted:      #A89580;
+    --bb-code-comment:    #A39681;   /* 暗底上终于越过 4.5:1，注释不再隐身 */
+    --bb-code-mint:       #3ECFBE;
+    --bb-code-mint-bg:    #17332E;
+    --bb-code-mint-line:  #2E4F4A;
+    --bb-code-focus:      #6B5410;   /* 代码选中：深赭金，不再是一盏黄灯 */
+    --bb-code-keyword:    #EB7C74;
+    --bb-code-number:     #E8C552;
+    --bb-code-string:     #9BCF6A;
+    --bb-code-string2:    #85C155;
+    --bb-code-em:         #E9A054;
+
+    /* === Obsidian 底层色阶（深色） === */
+    color-scheme: dark;
+    --highlight-mix-blend-mode: normal;
+    --mono-0: #212124;
+    --mono-100: #ECECEF;
+    --mono-rgb-0: 33, 33, 36;
+    --mono-rgb-100: 236, 236, 239;
+    --color-base-00:  #212124;
+    --color-base-05:  #26262A;
+    --color-base-10:  #2A2A2E;
+    --color-base-20:  #141416;
+    --color-base-25:  #2E2E33;
+    --color-base-30:  #3A3A40;
+    --color-base-35:  #47474E;
+    --color-base-40:  #5A5A62;
+    --color-base-50:  #767680;
+    --color-base-60:  #96969F;
+    --color-base-70:  #B2B2BA;
+    --color-base-100: #ECECEF;
+
+    --accent-h: 22;
+    --accent-s: 73%;
+    --accent-l: 56%;
+
+    /* 语义色（暗底提亮版） */
+    --color-red:      #EB7C74;
+    --color-orange:   #E9A054;
+    --color-yellow:   #E8C552;
+    --color-green:    #A8B36A;
+    --color-cyan:     #3ECFBE;
+    --color-blue:     #8FA3B5;
+    --color-purple:   #C79AB4;
+    --color-pink:     #C08A9E;
+    --color-red-rgb:    235, 124, 116;
+    --color-orange-rgb: 233, 160, 84;
+    --color-yellow-rgb: 232, 197, 82;
+    --color-green-rgb:  168, 179, 106;
+    --color-cyan-rgb:   62, 207, 190;
+    --color-blue-rgb:   143, 163, 181;
+    --color-purple-rgb: 199, 154, 180;
+    --color-pink-rgb:   192, 138, 158;
+    --color-accent-hsl: var(--accent-h), var(--accent-s), var(--accent-l);
+}
+
+/* =====================================================================
+   2 · 把调色板接到 Obsidian 的角色变量上
+   这一段两种模式共用：只按“角色”接线，颜色由上面两块提供，
+   所以换模式时无需重写任何结构样式。
+   ===================================================================== */
+body {
+    /* --- 底层表面 --- */
+    --background-primary:            var(--bb-paper);
+    --background-primary-alt:        var(--bb-mist);
+    --background-secondary:          var(--bb-mist);
+    --background-secondary-alt:      var(--bb-lift);
+    --background-modifier-border:        var(--color-base-30);
+    --background-modifier-border-hover:  var(--color-base-35);
+    --background-modifier-border-focus:  var(--bb-ink);
+    --background-modifier-hover:         var(--bb-hover);
+    --background-modifier-active-hover:  var(--bb-hover-strong);
+    --background-modifier-form-field:        var(--bb-lift);
+    --background-modifier-form-field-hover:  var(--bb-lift-2);
+    --background-modifier-box-shadow:  rgba(0, 0, 0, 0.18);
+    --background-modifier-cover:       var(--bb-overlay);
+    --background-modifier-message:     var(--bb-invert-bg);
+
+    /* --- 文字 --- */
+    --text-normal:        var(--bb-ink);
+    --text-muted:         var(--bb-ink-muted);
+    --text-faint:         var(--bb-faint);
+    --text-on-accent:     var(--bb-cta-ink);
+    --text-on-accent-inverted: var(--bb-on-amber);
+    --text-accent:        var(--bb-clay);
+    --text-accent-hover:  var(--bb-accent-hover);
+    --text-selection:     var(--bb-selection);
+    --text-highlight-bg:  var(--bb-amber);
+    --text-highlight-bg-rgb: 216, 162, 75;
+    --text-success:       var(--color-green);
+    --text-warning:       var(--color-orange);
+    --text-error:         var(--color-red);
+
+    /* --- 交互件 --- */
+    --interactive-normal:       var(--bb-lift);
+    --interactive-hover:        var(--bb-lift-2);
+    --interactive-accent:       var(--bb-cta-bg);
+    --interactive-accent-hover: var(--bb-cta-hover-bg);
+    --interactive-accent-hsl:   var(--color-accent-hsl);
+    --interactive-success:      var(--color-green);
+
+    /* --- 字体 --- */
+    --font-text-theme:      var(--bb-font);
+    --font-interface-theme: var(--bb-font);
+    --font-monospace-theme: var(--bb-code-mono);
+    --font-text-size:       16px;
+    /* 不直写 --font-text / --font-interface / --font-monospace：
+       它们是 Obsidian 设置里“字体”选项的最终值，直写会让设置页失效。
+       主题只提供 --font-*-theme，用户想换字体仍然可以在设置里覆盖。 */
+    --line-height-normal:   1.5;    /* UI 用；文档视图另行覆盖为 1.85 */
+    --caret-color:          var(--bb-ink);
+
+    /* --- 标题：六色谱接入 Obsidian 的 --hN-* 槽位 ---
+       颜色、字号、字重、字距、字体都走变量，阅读视图与实时预览自动一致。 */
+    --h1-font: var(--bb-font-display);
+    --h2-font: var(--bb-font-display);
+    --h3-font: var(--bb-font-display);
+    --h4-font: var(--bb-font-display);
+    --h5-font: var(--bb-font-display);
+    --h6-font: var(--bb-font-display);
+
+    --h1-color: var(--bb-h1);
+    --h2-color: var(--bb-h2);
+    --h3-color: var(--bb-h3);
+    --h4-color: var(--bb-h4);
+    --h5-color: var(--bb-h5);
+    --h6-color: var(--bb-h6);
+
+    --h1-size: 2.15em;
+    --h2-size: 1.58em;
+    --h3-size: 1.33em;
+    --h4-size: 1.18em;
+    --h5-size: 0.95em;
+    --h6-size: 0.8em;
+
+    --h1-weight: 800;
+    --h2-weight: 800;
+    --h3-weight: 800;
+    --h4-weight: 700;
+    --h5-weight: 700;
+    --h6-weight: 700;
+
+    --h1-letter-spacing: 0.03em;
+    --h2-letter-spacing: 0.015em;
+    --h3-letter-spacing: 0em;
+    --h4-letter-spacing: 0em;
+    --h5-letter-spacing: 0.02em;
+    --h6-letter-spacing: 0.18em;
+
+    --h1-line-height: 1.28;
+    --h2-line-height: 1.35;
+    --h3-line-height: 1.4;
+    --h4-line-height: 1.35;
+    --h5-line-height: 1.35;
+    --h6-line-height: 1.35;
+
+    --heading-formatting: var(--bb-ink-muted);
+    --heading-spacing: 1.35em;
+    --p-spacing: 0.75em;
+    --p-spacing-empty: 0em;   /* 标题与首段之间的间距由标题自身 margin 负责，避免叠加 */
+
+    /* --- 行内 --- */
+    --bold-color:    var(--bb-ink);
+    --bold-weight:   800;
+    --italic-color:  var(--bb-ink);
+    --italic-weight: 400;
+
+    /* --- 链接：墨色细线，hover 反白成块 --- */
+    --link-color:            var(--bb-ink);
+    --link-color-hover:      var(--bb-clay);
+    --link-decoration:       none;
+    --link-decoration-hover: none;
+    --link-decoration-thickness: 1px;
+    --link-external-color:         var(--bb-ink);
+    --link-external-color-hover:   var(--bb-clay);
+    --link-external-decoration:    none;
+    --link-unresolved-color:          var(--bb-ink-muted);
+    --link-unresolved-opacity:        1;
+    --link-unresolved-decoration-color: var(--bb-line-strong);
+    --link-unresolved-decoration-style: dashed;
+    --link-unresolved-filter:         none;
+    --link-weight: 400;
+
+    /* --- 列表：包豪斯的“点”是方的 --- */
+    --list-marker-color:          var(--bb-ink);
+    --list-marker-color-hover:    var(--bb-clay);
+    --list-marker-color-collapsed: var(--bb-ink-muted);
+    --list-bullet-radius:         0px;      /* 方点 */
+    --list-bullet-size:           0.3em;
+    --list-bullet-border:         none;
+    --list-bullet-transform:      none;
+    --list-indent:                1.6em;
+    --list-spacing:               0.28em;
+    --list-numbered-style:        decimal;
+    --indentation-guide-color:        var(--bb-line-faint);
+    --indentation-guide-color-active: var(--bb-clay);
+    --indentation-guide-width:        1px;
+
+    /* --- 引言块：暖砂实心块 + 墨字 --- */
+    --blockquote-background-color: var(--bb-amber-ground);
+    --blockquote-border-color:     var(--bb-line-strong);
+    --blockquote-border-thickness: 1px;
+    --blockquote-color:            var(--bb-ink);
+    --blockquote-font-style:       normal;
+
+    /* --- 代码：角色变量指向暖纸卡片 --- */
+    --code-background:   var(--bb-code-bg);
+    --code-normal:       var(--bb-code-text);
+    --code-size:         0.92em;
+    --code-radius:       var(--bb-code-radius);
+    --code-border-width: 1.5px;   /* 行内代码描边；代码卡片的 2px 由形状规则单独给 */
+    --code-border-color: var(--bb-code-border);
+    --code-white-space:  pre;
+    --code-comment:      var(--bb-code-comment);
+    --code-function:     var(--bb-code-mint);
+    --code-keyword:      var(--bb-code-keyword);
+    --code-string:       var(--bb-code-string);
+    --code-value:        var(--bb-code-number);
+    --code-tag:          var(--bb-code-keyword);
+    --code-property:     var(--bb-code-mint);
+    --code-operator:     var(--bb-code-text-main);
+    --code-punctuation:  var(--bb-code-text-2);
+    --code-important:    var(--bb-code-em);
+    --code-bracket-background: transparent;
+
+    /* --- 表格：墨底云白字表头 + 雾灰斑马 ---
+       注意：Obsidian 的表头底色挂在 thead 的 tr 上，而“隔列底色”
+       (--table-column-alt-background) 会落到 th:2n+2 并与表头墨底打架，
+       所以列底色必须留透明，斑马只靠奇数行变量完成。 */
+    --table-background:               transparent;
+    --table-border-color:             var(--bb-line-strong);
+    --table-border-width:             1px;
+    --table-header-background:        var(--bb-invert-bg);
+    --table-header-color:             var(--bb-invert-ink);
+    --table-header-weight:            700;
+    --table-header-size:              0.95em;
+    --table-header-font:              var(--bb-font-display);
+    --table-header-border-color:      var(--bb-invert-bg);
+    --table-header-border-width:      0px;
+    --table-text-color:               var(--bb-ink);
+    --table-row-alt-background:       var(--bb-mist);
+    --table-row-background-hover:     var(--bb-amber-tint);
+    --table-row-alt-background-hover: var(--bb-amber-tint);
+    --table-header-background-hover:  var(--bb-invert-bg);
+    --table-column-alt-background:    transparent;
+    --table-column-first-border-width: 0px;
+    --table-column-last-border-width:  0px;
+    --table-row-last-border-width:     0px;
+    --table-cell-vertical-alignment:   top;
+    --table-white-space:               break-spaces;
+    --table-selection:               var(--bb-amber-tint);
+    --table-selection-border-color:  var(--bb-clay);
+    --table-selection-border-width:  2px;
+    --table-selection-blend-mode:    normal;
+    --table-drag-handle-color:       var(--bb-ink-muted);
+    --table-drag-handle-background:  var(--bb-mist);
+    --table-drag-handle-color-active: var(--bb-paper);
+    --table-drag-handle-background-active: var(--bb-ink);
+    --table-add-button-border-color: var(--bb-line-strong);
+    --table-add-button-background:   var(--bb-paper);
+
+    /* --- 分隔线 --- */
+    --hr-color:     var(--bb-line);
+    --hr-thickness: 1px;
+
+    /* --- 任务列表：方形复选框 --- */
+    --checkbox-size:               17px;
+    --checkbox-radius:             var(--bb-radius-xs);
+    --checkbox-color:              var(--bb-cta-bg);
+    --checkbox-color-hover:        var(--bb-cta-hover-bg);
+    --checkbox-border-color:       var(--bb-line-strong);
+    --checkbox-border-color-hover: var(--bb-ink);
+    --checkbox-marker-color:       var(--bb-cta-ink);
+    --checkbox-margin-inline-start: 0.4em;
+    --checklist-done-color:        var(--bb-ink-muted);
+    --checklist-done-decoration:   line-through;
+
+    /* --- 标签 --- */
+    --tag-color:          var(--bb-tag-ink);
+    --tag-color-hover:    var(--bb-tag-ink-hover);
+    --tag-background:     var(--bb-amber-tint);
+    --tag-background-hover: var(--bb-amber-tint);
+    --tag-border-color:   transparent;
+    --tag-border-color-hover: var(--bb-line-strong);
+    --tag-border-width:   0px;
+    --tag-radius:         var(--bb-radius-xs);
+    --tag-padding-x:      0.4em;
+    --tag-padding-y:      0.08em;
+    --tag-size:           0.86em;
+    --tag-weight:         600;
+
+    /* --- 输入框 / 按钮 --- */
+    --input-radius:        var(--bb-radius-sm);
+    --input-height:        30px;
+    --input-border-width:  1px;
+    --input-border-width-focus: 1px;
+    --input-padding:       var(--size-4-1) var(--size-4-2);
+    --input-shadow:        none;
+    --input-shadow-hover:  none;
+    --input-placeholder-color: var(--bb-ink-muted);
+    --input-icon-inset:    var(--size-4-2);
+    --search-input-radius: var(--bb-radius-sm);
+    --search-clear-button-color: var(--bb-ink-muted);
+    --clickable-icon-radius: var(--bb-radius-sm);
+
+    /* --- 侧栏 / 导航 --- */
+    --nav-item-color:              var(--bb-ink-soft);
+    --nav-item-color-hover:        var(--bb-ink);
+    --nav-item-color-active:       var(--bb-ink);
+    --nav-item-color-selected:     var(--bb-invert-ink);
+    --nav-item-background-hover:   var(--bb-paper);
+    --nav-item-background-active:  var(--bb-hover);
+    --nav-item-background-selected: var(--bb-invert-bg);
+    --nav-item-radius:             var(--bb-radius-xs);
+    --nav-item-padding:            4px 8px;
+    --nav-item-size:               14px;
+    --nav-item-weight:             400;
+    --nav-item-weight-hover:       600;
+    --nav-item-weight-active:      600;
+    --nav-item-white-space:        nowrap;
+    --nav-heading-color:           var(--bb-ink-muted);
+    --nav-heading-color-hover:     var(--bb-ink);
+    --nav-heading-weight:          700;
+    --nav-collapse-icon-color:         var(--bb-ink-muted);
+    --nav-collapse-icon-color-collapsed: var(--bb-ink);
+
+    /* --- 丝带 / 标签页 / 标题栏 / 状态栏 --- */
+    --ribbon-background:          var(--bb-mist);
+    --ribbon-background-collapsed: var(--bb-mist);
+    --titlebar-background:         var(--bb-mist);
+    --titlebar-background-focused: var(--bb-mist);
+    --titlebar-text-color:         var(--bb-ink-muted);
+    --titlebar-text-color-focused: var(--bb-ink);
+    --titlebar-border-width:       0px;
+    --tab-container-background:  var(--bb-mist);
+    --tab-background-active:     var(--bb-paper);
+    --tab-text-color:            var(--bb-ink-muted);
+    --tab-text-color-active:     var(--bb-ink);
+    --tab-text-color-focused:    var(--bb-ink-muted);
+    --tab-text-color-focused-active: var(--bb-ink);
+    --tab-text-color-focused-active-current: var(--bb-ink);
+    --tab-text-color-focused-highlighted: var(--bb-clay);
+    --tab-outline-color:         var(--bb-line-faint);
+    --tab-outline-width:         1px;
+    --tab-divider-color:         transparent;
+    --tab-radius:                var(--bb-radius-sm);
+    --tab-radius-active:         var(--bb-radius-sm) var(--bb-radius-sm) 0 0;
+    --status-bar-background:     var(--bb-invert-bg);
+    --status-bar-text-color:     var(--bb-invert-ink);
+    --status-bar-border-color:   transparent;
+    --status-bar-border-width:   0px;
+    --status-bar-font-size:      12px;
+    --status-bar-radius:         0px;
+    --divider-color:             var(--bb-line);
+    --divider-width:             1px;
+
+    /* --- 弹层 --- */
+    --modal-background:      var(--bb-paper);
+    --modal-border-color:    var(--bb-line-strong);
+    --modal-border-width:    1px;
+    --modal-radius:          var(--bb-radius-lg);
+    --modal-shadow:          var(--bb-shadow-float);
+    --prompt-background:     var(--bb-paper);
+    --prompt-border-color:   var(--bb-line-strong);
+    --prompt-border-width:   1px;
+    --prompt-max-width:      720px;
+    --menu-background:       var(--bb-paper);
+    --menu-border-color:     var(--bb-line-strong);
+    --menu-border-width:     1px;
+    --menu-radius:           var(--bb-radius);
+    --menu-shadow:           var(--bb-shadow-float);
+    --suggestion-background: var(--bb-paper);
+    --search-result-background: var(--bb-paper);
+
+    /* --- 嵌入笔记 / 文件头 --- */
+    --embed-background:      var(--bb-mist);
+    --embed-border-top:      1px solid var(--bb-line);
+    --embed-border-bottom:   1px solid var(--bb-line);
+    --embed-border-start:    1px solid var(--bb-line);
+    --embed-border-end:      1px solid var(--bb-line);
+    --embed-padding:         0 var(--size-4-4);
+    --embed-max-height:      4000px;
+
+    /* --- 属性 / frontmatter --- */
+    --metadata-background:            transparent;
+    --metadata-border-color:          var(--bb-line);
+    --metadata-border-width:          1px;
+    --metadata-border-radius:         var(--bb-radius);
+    --metadata-padding:               12px 16px;
+    --metadata-label-text-color:      var(--bb-ink-muted);
+    --metadata-label-background:      var(--bb-mist);
+    --metadata-label-font:            var(--bb-font);
+    --metadata-input-text-color:      var(--bb-ink);
+    --metadata-input-background:      transparent;
+    --metadata-input-background-hover: var(--bb-hover);
+    --metadata-divider-color:         var(--bb-line-faint);
+
+    /* --- callout：只用五色与六色谱 --- */
+    --callout-blend-mode:     normal;
+    --callout-border-width:   1px;
+    --callout-border-opacity: 1;
+    --callout-radius:         var(--bb-radius);
+    --callout-padding:        16px 20px;
+    --callout-title-size:     1em;
+    --callout-title-weight:   700;
+    --callout-title-color:    var(--bb-ink);
+    --callout-content-background: transparent;
+    --callout-content-padding: 0;
+    --callout-default:  var(--bb-h6);
+    --callout-info:     var(--bb-h3);
+    --callout-summary:  var(--bb-h3);
+    --callout-tip:      var(--bb-h4);
+    --callout-success:  var(--bb-h4);
+    --callout-question: var(--bb-h5);
+    --callout-example:  var(--bb-h5);
+    --callout-warning:  var(--bb-amber);
+    --callout-important: var(--bb-amber);
+    --callout-fail:     var(--bb-clay);
+    --callout-failure:  var(--bb-clay);
+    --callout-error:    var(--bb-clay);
+    --callout-bug:      var(--bb-clay);
+    --callout-danger:   var(--bb-clay);
+    --callout-todo:     var(--bb-h6);
+    --callout-quote:    var(--bb-ink);
+
+    /* --- 图谱 / Canvas / PDF --- */
+    --graph-text:            var(--bb-ink-muted);
+    --graph-line:            var(--bb-line);
+    --graph-node:            var(--bb-ink-soft);
+    --graph-node-focused:    var(--bb-clay);
+    --graph-node-tag:        var(--bb-h4);
+    --graph-node-attachment: var(--bb-h3);
+    --graph-node-unresolved: var(--bb-h6);
+    /* --- Canvas / Bases --- */
+    --canvas-background:       var(--bb-canvas);    --canvas-card-label-color: var(--bb-ink-muted);
+    --canvas-dot-pattern:      var(--bb-line);
+    --canvas-color-1: var(--bb-canvas-1);
+    --canvas-color-2: var(--bb-canvas-2);
+    --canvas-color-3: var(--bb-canvas-3);
+    --canvas-color-4: var(--bb-canvas-4);
+    --canvas-color-5: var(--bb-canvas-5);
+    --canvas-color-6: var(--bb-canvas-6);
+    --pdf-background:         var(--bb-paper);
+    --pdf-page-background:    var(--bb-paper);
+    --pdf-sidebar-background: var(--bb-mist);
+    --pdf-shadow:             0 0 0 1px var(--bb-line);
+    --pdf-thumbnail-shadow:   0 0 0 1px var(--bb-line);
+
+    /* --- 滚动条 --- */
+    --scrollbar-bg:               var(--bb-mist);
+    --scrollbar-thumb-bg:         var(--bb-line-strong);
+    --scrollbar-active-thumb-bg:  var(--bb-ink);
+    --scrollbar-radius:           999px;
+    --scrollbar-width:            10px;
+    --scrollbar-height:           10px;
+    --scrollbar-border-width:     2px;
+
+    /* --- 图标 --- */
+    --icon-color:         var(--bb-ink-muted);
+    --icon-color-hover:   var(--bb-ink);
+    --icon-color-active:  var(--bb-ink);
+    --icon-color-focused: var(--bb-ink);
+
+    /* --- 文档版面：纸面宽度与外边距 --- */
+    --file-line-width: var(--bb-sheet-width);
+    --file-margins-x:  24px;
+    --file-margins-y:  34px;
+    --file-margins:    var(--file-margins-y) var(--file-margins-x) 72px;
+    --indent-size:     4;
+
+    /* --- Bases（Obsidian 1.9+ 的数据库视图）与嵌入件 --- */
+    --bases-table-border-color:        var(--bb-line);
+    --bases-table-header-background:   var(--bb-mist);
+    --bases-table-header-color:        var(--bb-ink);
+    --bases-cards-background:          var(--bb-paper);
+    --bases-embed-border-color:        var(--bb-line);
+    --bases-table-cell-background-active: var(--bb-amber-tint);
+}
+
+/* =====================================================================
+   3 · 绘图台：雾灰底 + 40px 图纸网格
+   纸面之外的区域都是“绘图台”，网格印在它上面（不随内容滚动）。
+   ===================================================================== */
+body,
+body.theme-light,
+body.theme-dark {
+    background-color: var(--bb-canvas);
+    font-family: var(--bb-font);
+    color: var(--bb-ink);
+    letter-spacing: 0.008em;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* 阅读视图：纸面之外的绘图台 */
+.workspace-leaf-content.is-read-mode .markdown-preview-view,
+.markdown-preview-view {
+    background-color: var(--bb-canvas);
+    background-image: var(--bb-grid-image);
+    background-size: var(--bb-grid-size);
+    background-position: 0 0;
+    background-attachment: fixed;
+}
+
+/* 实时预览 / 源码模式：同样一张绘图台 */
+.markdown-source-view.mod-cm6 .cm-scroller {
+    background-color: var(--bb-canvas);
+    background-image: var(--bb-grid-image);
+    background-size: var(--bb-grid-size);
+    background-position: 0 0;
+    background-attachment: fixed;
+    color: var(--bb-ink);
+    font-family: var(--bb-font);
+}
+
+/* 内嵌笔记里不需要再铺一层网格 */
+.markdown-embed .markdown-preview-view,
+.popover .markdown-preview-view,
+.markdown-source-view.mod-cm6 .cm-embed-block .cm-editor .cm-scroller {
+    background-image: none;
+    background-color: var(--bb-mist);
+}
+
+/* =====================================================================
+   4 · 云白图纸：内容列
+   Typora 的 #write 是一张浮起的纸；Obsidian 里对应
+   阅读视图的 .markdown-preview-sizer 与实时预览的 .cm-sizer。
+   ===================================================================== */
+.markdown-preview-view {
+    font-family: var(--bb-font);
+    font-size: 16px;
+    line-height: var(--bb-line-height);
+    color: var(--bb-ink);
+}
+
+.markdown-preview-sizer {
+    box-sizing: border-box;
+    background-color: var(--bb-paper);
+    border: 1px solid var(--bb-line);
+    border-radius: var(--bb-radius-lg);
+    box-shadow: var(--bb-shadow-sheet);
+    padding: var(--bb-sheet-pad-top) var(--bb-sheet-pad-x) var(--bb-sheet-pad-bottom);
+}
+
+.markdown-source-view.mod-cm6 .cm-sizer {
+    box-sizing: border-box;
+    background-color: var(--bb-paper);
+    border: 1px solid var(--bb-line);
+    border-radius: var(--bb-radius-lg);
+    box-shadow: var(--bb-shadow-sheet);
+    padding: var(--bb-sheet-pad-top) var(--bb-sheet-pad-x) var(--bb-sheet-pad-bottom);
+}
+
+.markdown-source-view.mod-cm6 .cm-scroller {
+    font-family: var(--bb-font);
+    line-height: var(--bb-line-height);
+}
+
+/* 纸面内的排版细节 */
+.markdown-preview-view p,
+.markdown-source-view.mod-cm6 .cm-line {
+    line-height: var(--bb-line-height);
+}
+
+.markdown-rendered > :first-child {
+    margin-top: 0;
+}
+
+/* 嵌入笔记与悬停预览里会再套一层完整的 .markdown-preview-view，
+   纸面规则会被递归应用成“卡片套卡片”，这里把它们还原成平铺。 */
+.markdown-embed .markdown-preview-view,
+.markdown-embed .markdown-source-view,
+.hover-popover .markdown-preview-view,
+.hover-popover .markdown-source-view,
+.popover .markdown-preview-view,
+.canvas-node-content .markdown-preview-view {
+    background-color: transparent;
+    background-image: none;
+    padding: 0;
+}
+
+.markdown-embed .markdown-preview-sizer,
+.markdown-embed .cm-sizer,
+.hover-popover .markdown-preview-sizer,
+.hover-popover .cm-sizer,
+.popover .markdown-preview-sizer,
+.canvas-node-content .markdown-preview-sizer,
+.canvas-node-content .cm-sizer {
+    background-color: transparent;
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
+    padding: 0;
+    max-width: 100% !important;   /* 要压过 .is-readable-line-width 的 860px 上限 */
+}
+
+/* =====================================================================
+   5 · 标题：六个层级各用一种装置、各配一色，不重复
+     H1 居中定标线（三角＋方）· 石墨    H2 通栏色带 · 赤陶
+     H3 三角＋通栏细线 · 赭金          H4 记号笔横条 · 橄榄
+     H5 灰底标签块 · 梅褐              H6 字距微标签 + 引线 · 暖灰
+   装置是层级提示的装饰件（不承载必要信息，按 WCAG 1.4.11
+   装饰件豁免）；颜色是层级索引（见 --bb-h1 … --bb-h6）。
+
+   Obsidian 里每个标题有两个宿主：阅读视图的 h1…h6，
+   实时预览的 .HyperMD-header-N（CodeMirror 6 的行）。两者都要给，
+   且实时预览里不能加会干扰光标定位的伪元素，所以装置一律用
+   background-image / border / padding 实现——两种视图同一套画法。
+   ===================================================================== */
+.markdown-rendered h1, .HyperMD-header-1, .inline-title {
+    text-align: center;
+    letter-spacing: 0.03em;
+    line-height: 1.28;
+}
+
+.markdown-rendered h2, .HyperMD-header-2 {
+    text-align: left;
+}
+
+.markdown-rendered h1,
+.HyperMD-header-1,
+.markdown-rendered h2,
+.HyperMD-header-2,
+.markdown-rendered h3,
+.HyperMD-header-3,
+.markdown-rendered h4,
+.HyperMD-header-4,
+.markdown-rendered h5,
+.HyperMD-header-5,
+.markdown-rendered h6,
+.HyperMD-header-6 {
+    font-family: var(--bb-font-display);
+}
+
+/* --- H1：居中大标题 + 下压一条“定标线”（暖砂三角 + 赤陶方形） --- */
+.markdown-rendered h1,
+.HyperMD-header-1 {
+    color: var(--bb-h1);
+    margin: 1.35em 0 1.25em;
+    padding: 0 0 26px;
+    background-image: var(--bb-mark-h1),
+        linear-gradient(var(--bb-line-strong), var(--bb-line-strong));
+    background-repeat: no-repeat, no-repeat;
+    background-position: center bottom, center bottom;
+    background-size: 96px 26px, 100% 1px;
+}
+
+/* 行内标题（Obsidian 的文件名标题）沿用 H1 的装置。
+   注意 `.inline-title:not([data-level])` 的 letter-spacing 在 Obsidian 里是硬编码的
+   -0.015em（权重 0,2,0），必须用同样的形状才能扳回制图字的开字距。 */
+.inline-title,
+.inline-title:not([data-level]) {
+    color: var(--bb-h1);
+    font-family: var(--bb-font-display);
+    font-weight: 800;
+    font-size: 2.15em;
+    letter-spacing: 0.03em;
+    text-align: center;
+    margin: 0 0 1.25em;
+    padding: 0 0 26px;
+    background-image: var(--bb-mark-h1),
+        linear-gradient(var(--bb-line-strong), var(--bb-line-strong));
+    background-repeat: no-repeat, no-repeat;
+    background-position: center bottom, center bottom;
+    background-size: 96px 26px, 100% 1px;
+}
+
+/* --- H2：通栏色带（6px 赤陶竖条 + 向右淡出的雾灰色带） --- */
+.markdown-rendered h2,
+.HyperMD-header-2 {
+    color: var(--bb-h2);
+    letter-spacing: 0.015em;
+    margin: 2.05em 0 0.95em;
+    padding: 10px 20px 11px 22px;
+    background-image: linear-gradient(to right,
+        var(--bb-mist) 0%,
+        var(--bb-band-mid) 52%,
+        var(--bb-band-end) 100%);
+    border-left: 6px solid var(--bb-h2);
+    border-radius: 0 var(--bb-radius-sm) var(--bb-radius-sm) 0;
+}
+
+/* --- H3：赭金三角标记 + 赭金字 + 1px 通栏细线 --- */
+.markdown-rendered h3,
+.HyperMD-header-3 {
+    color: var(--bb-h3);
+    margin: 1.75em 0 0.7em;
+    padding: 0 0 10px 22px;
+    border-bottom: 1px solid var(--bb-line);
+    background-image: var(--bb-mark-tri-h3);
+    background-repeat: no-repeat;
+    background-position: 0 calc(50% - 5px);
+    background-size: 14px 12px;
+}
+
+/* --- H4：橄榄“记号笔”横条（44px 粗下划线） --- */
+.markdown-rendered h4,
+.HyperMD-header-4 {
+    color: var(--bb-h4);
+    margin: 1.5em 0 0.5em;
+    padding-bottom: 8px;
+    background-image: linear-gradient(to right,
+        var(--bb-h4) 0,
+        var(--bb-h4) 44px,
+        transparent 44px);
+    background-repeat: no-repeat;
+    background-position: 0 100%;
+    background-size: 100% 3px;
+}
+
+/* --- H5：雾灰标签块（梅褐字 + 梅褐描边，唯一“贴纸”形标题） --- */
+.markdown-rendered h5,
+.HyperMD-header-5 {
+    color: var(--bb-h5);
+    letter-spacing: 0.02em;
+    margin: 1.15em 0 0.4em;
+    padding: 3px 12px;
+    background-color: var(--bb-mist);
+    border: 1px solid var(--bb-h5);
+    border-radius: var(--bb-radius-xs);
+    width: fit-content;
+}
+
+/* --- H6：制图式小型大写标签（暖灰字距 + 1px 暖灰引线） --- */
+.markdown-rendered h6,
+.HyperMD-header-6 {
+    color: var(--bb-h6);
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    margin: 1.25em 0 0.35em;
+    padding: 0.15em 0 0.15em 36px;
+    background-image: linear-gradient(var(--bb-h6), var(--bb-h6));
+    background-repeat: no-repeat;
+    background-position: 0 50%;
+    background-size: 26px 1px;
+}
+
+/* 字号/字重/行高全部走 --hN-* 变量（见第 2 节），不要在这里直写 font-weight：
+   Obsidian 的 bold 是 calc(var(--font-weight) + var(--bold-modifier))，
+   直写会把标题里的加粗压平。 */
+
+/* Obsidian 有两条 margin-top 规则会盖掉单层 hN 的上边距：
+   `.markdown-rendered :is(p,pre,table,ul,ol)+:is(h1…h6)`（权重 0,1,2）
+   与 `.markdown-rendered div:is(.el-p,…)+div > :is(h1…h6)`（权重 0,2,3）。
+   这里按同样的形状、同样的权重、更靠后的顺序把六个层级的节奏抢回来。 */
+body .markdown-rendered h1 { margin-block-start: 1.35em; }
+body .markdown-rendered h2 { margin-block-start: 2.05em; }
+body .markdown-rendered h3 { margin-block-start: 1.75em; }
+body .markdown-rendered h4 { margin-block-start: 1.5em; }
+body .markdown-rendered h5 { margin-block-start: 1.15em; }
+body .markdown-rendered h6 { margin-block-start: 1.25em; }
+
+body .markdown-rendered div:is(.el-blockquote, .el-p, .el-pre, .el-table, .el-ul, .el-ol) + div > h1 { margin-block-start: 1.35em; }
+body .markdown-rendered div:is(.el-blockquote, .el-p, .el-pre, .el-table, .el-ul, .el-ol) + div > h2 { margin-block-start: 2.05em; }
+body .markdown-rendered div:is(.el-blockquote, .el-p, .el-pre, .el-table, .el-ul, .el-ol) + div > h3 { margin-block-start: 1.75em; }
+body .markdown-rendered div:is(.el-blockquote, .el-p, .el-pre, .el-table, .el-ul, .el-ol) + div > h4 { margin-block-start: 1.5em; }
+body .markdown-rendered div:is(.el-blockquote, .el-p, .el-pre, .el-table, .el-ul, .el-ol) + div > h5 { margin-block-start: 1.15em; }
+body .markdown-rendered div:is(.el-blockquote, .el-p, .el-pre, .el-table, .el-ul, .el-ol) + div > h6 { margin-block-start: 1.25em; }
+
+/* 实时预览：CodeMirror 6 对 `.cm-content > *` 施加了 margin: 0 !important，
+   纵向节奏只能自己带 !important 才生效；内边距同时要压过
+   `.cm-s-obsidian .cm-line.HyperMD-header { padding-top: var(--p-spacing) }`，
+   所以六条规则都用 `.markdown-source-view.mod-cm6 .cm-line` 前缀并把 padding 写全。 */
+.markdown-source-view.mod-cm6 .cm-line.HyperMD-header-1 {
+    margin: 1.35em 0 1.25em !important;
+    padding: 0 0 26px;
+}
+
+.markdown-source-view.mod-cm6 .cm-line.HyperMD-header-2 {
+    margin: 2.05em 0 0.95em !important;
+    padding: 10px 20px 11px 22px;
+}
+
+.markdown-source-view.mod-cm6 .cm-line.HyperMD-header-3 {
+    margin: 1.75em 0 0.7em !important;
+    padding: 0 0 10px 22px;
+}
+
+.markdown-source-view.mod-cm6 .cm-line.HyperMD-header-4 {
+    margin: 1.5em 0 0.5em !important;
+    padding: 0 0 8px;
+}
+
+.markdown-source-view.mod-cm6 .cm-line.HyperMD-header-5 {
+    margin: 1.15em 0 0.4em !important;
+    padding: 3px 12px;
+}
+
+.markdown-source-view.mod-cm6 .cm-line.HyperMD-header-6 {
+    margin: 1.25em 0 0.35em !important;
+    padding: 0.15em 0 0.15em 36px;
+}
+
+/* 标题里的井号与 Markdown 记号：不抢标题色 */
+.markdown-source-view.mod-cm6 .cm-formatting-header {
+    color: var(--bb-ink-muted);
+    font-weight: 400;
+    letter-spacing: 0;
+}
+
+/* =====================================================================
+   6 · 正文 / 行内
+   ===================================================================== */
+/* 正文文字色。注意不能一律打在 `.cm-line` 上：那是标题行的同一个元素，
+   会把 --hN-color 的六色谱压成墨色（实时预览里标题就全黑了）。
+   标题自己带色，其余行继承绘图台/纸面的墨色即可。 */
+.markdown-rendered p,
+.markdown-source-view.mod-cm6 .cm-line:not([class*="HyperMD-header"]) {
+    color: var(--bb-ink);
+}
+
+.markdown-rendered strong,
+.markdown-rendered b,
+.markdown-source-view.mod-cm6 .cm-strong {
+    color: var(--bb-ink);
+    font-weight: 800;
+}
+
+.markdown-rendered em,
+.markdown-rendered i,
+.markdown-source-view.mod-cm6 .cm-em {
+    color: var(--bb-ink);
+}
+
+.markdown-rendered del,
+.markdown-rendered s,
+.markdown-source-view.mod-cm6 .cm-strikethrough {
+    color: var(--bb-ink-muted);
+    text-decoration-color: var(--bb-clay);
+}
+
+/* 高亮：暖砂实心块 + 墨字 */
+.markdown-rendered mark,
+.markdown-source-view.mod-cm6 .cm-highlight,
+.cm-s-obsidian span.cm-highlight {
+    background-color: var(--bb-amber);
+    color: var(--bb-on-amber);
+    padding: 0 4px;
+    border-radius: var(--bb-radius-xs);
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+}
+
+/* =====================================================================
+   7 · 链接：墨色细线（包豪斯“反白”只在 hover 时出现）
+   ===================================================================== */
+.markdown-rendered a.internal-link,
+.markdown-rendered a.external-link,
+.markdown-rendered a.footnote-link {
+    color: var(--bb-ink);
+    text-decoration: none;
+    border-bottom: 1px solid var(--bb-line-strong);
+    padding: 0 1px;
+    transition: background-color 0.15s ease, color 0.15s ease,
+                border-color 0.15s ease;
+}
+
+.markdown-rendered a.internal-link:hover,
+.markdown-rendered a.external-link:hover,
+.markdown-rendered a.footnote-link:hover {
+    background-color: var(--bb-invert-bg);
+    color: var(--bb-invert-ink);
+    border-bottom-color: var(--bb-invert-bg);
+    border-radius: var(--bb-radius-xs);
+}
+
+/* 未创建的笔记：只留一条虚线，不喊叫 */
+.markdown-rendered a.internal-link.is-unresolved {
+    color: var(--bb-ink-muted);
+    border-bottom-style: dashed;
+    border-bottom-color: var(--bb-line-strong);
+}
+
+.markdown-rendered a.internal-link.is-unresolved:hover {
+    color: var(--bb-ink);
+    background: var(--bb-mist);
+}
+
+/* 实时预览里的链接：只加细线，不改背景（避免编辑时整行跳动） */
+.markdown-source-view.mod-cm6 .cm-link,
+.markdown-source-view.mod-cm6 .cm-hmd-internal-link,
+.markdown-source-view.mod-cm6 .cm-url {
+    color: var(--bb-ink);
+    text-decoration: none;
+    border-bottom: 1px solid var(--bb-line-strong);
+}
+
+.markdown-source-view.mod-cm6 .cm-url {
+    color: var(--bb-ink-muted);
+    border-bottom-color: var(--bb-line);
+}
+
+/* 标签：赤陶字 + 暖砂底的小贴条 */
+.markdown-rendered a.tag,
+.markdown-source-view.mod-cm6 .cm-hashtag,
+.cm-s-obsidian .cm-hashtag {
+    color: var(--bb-tag-ink);
+    background-color: var(--bb-amber-tint);
+    border: 1px solid transparent;
+    border-radius: var(--bb-radius-xs);
+    padding: 0 4px;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.markdown-rendered a.tag:hover,
+.markdown-source-view.mod-cm6 .cm-hashtag:hover {
+    color: var(--bb-tag-ink-hover);
+    border-color: var(--bb-line-strong);
+}
+
+/* Markdown 格式符（**、`、~~ 等）：薄荷色的轻描 */
+.markdown-source-view.mod-cm6 .cm-formatting:not(.cm-formatting-header) {
+    color: var(--bb-code-mint);
+    opacity: 0.9;
+}
+
+/* 脚注：暖砂底的“贴条”，与 Typora 版同形 */
+.markdown-rendered .footnote-ref,
+.markdown-rendered .footnote-backref,
+.markdown-rendered .footnote-link,
+.markdown-source-view.mod-cm6 .cm-footref {
+    color: var(--bb-clay);
+    background: var(--bb-amber-tint);
+    border: 1px solid var(--bb-line-strong);
+    border-radius: var(--bb-radius-xs);
+    padding: 0 6px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+/* =====================================================================
+   8 · 列表：方形项目符号（包豪斯的“点”是方的）
+   Obsidian 把 ul 的 ::marker 清零、改用 span.list-bullet 画点，
+   所以方块来自 --list-bullet-radius: 0，层级色要打在 .list-bullet 上。
+   ===================================================================== */
+.markdown-rendered li > p {
+    margin: 0.2em 0;
+}
+
+/* 二级及以下的方点换赤陶：不带 .markdown-rendered 前缀，
+   这样阅读视图与实时预览（.list-bullet 是同一个类）都能生效。
+   折叠态仍由 Obsidian 的 `li.is-collapsed …:after`（权重更高）接管。 */
+ul ul > li > .list-bullet::after {
+    background-color: var(--bb-clay);
+}
+
+ol > li::marker {
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+/* 任务列表：方形复选框 + 完成后压暗 */
+.markdown-rendered ul > li.task-list-item {
+    list-style: none;
+}
+
+.markdown-rendered .task-list-item-checkbox {
+    border-width: 1.5px;
+    vertical-align: -3px;
+}
+
+.markdown-source-view.mod-cm6 .cm-line.HyperMD-task-line[data-task="x"],
+.markdown-source-view.mod-cm6 .cm-line.HyperMD-task-line[data-task="X"] {
+    color: var(--bb-ink-muted);
+}
+
+/* =====================================================================
+   9 · 引言块：暖砂实心块 + 墨字
+   ===================================================================== */
+.markdown-rendered blockquote {
+    margin: 1.3em 0;
+    padding: 16px 22px;
+    background: var(--bb-amber-ground);
+    border: 1px solid var(--bb-line-strong);
+    border-radius: var(--bb-radius);
+    color: var(--bb-ink);
+    font-style: normal;
+}
+
+.markdown-rendered blockquote > :first-child {
+    margin-top: 0;
+}
+
+.markdown-rendered blockquote > :last-child {
+    margin-bottom: 0;
+}
+
+/* 嵌套引言落回雾灰，避免双层暖砂块 */
+.markdown-rendered blockquote blockquote {
+    background: var(--bb-mist);
+    border-color: var(--bb-line);
+    border-radius: var(--bb-radius-sm);
+}
+
+.markdown-rendered blockquote mark {
+    background: var(--bb-paper);
+}
+
+/* 暖砂块上的行内代码：薄荷贴片压彩底会脏，换成纸白底 */
+.markdown-rendered blockquote code {
+    background: var(--bb-paper);
+    border-color: var(--bb-line);
+}
+
+/* 暖砂块上的次要信息：70% 墨压在砂底只有 ≈4.0:1，这里加深到 ink-soft */
+.markdown-rendered blockquote del,
+.markdown-rendered blockquote s,
+.markdown-rendered blockquote .footnote-ref {
+    color: var(--bb-ink-soft);
+    text-decoration-color: var(--bb-ink-soft);
+}
+
+/* 暖砂块里标题回到墨色：彩字压彩底会掉对比度 */
+.markdown-rendered blockquote h1,
+.markdown-rendered blockquote h2,
+.markdown-rendered blockquote h3,
+.markdown-rendered blockquote h4,
+.markdown-rendered blockquote h5,
+.markdown-rendered blockquote h6 {
+    color: var(--bb-ink);
+}
+
+.markdown-rendered blockquote h5 {
+    border-color: var(--bb-ink-soft);
+    background: transparent;
+}
+
+/* 暖砂块里的选中反白 */
+.markdown-rendered blockquote ::selection {
+    background: var(--bb-invert-bg);
+    color: var(--bb-invert-ink);
+}
+
+/* 实时预览的引言：逐行给暖砂底。CSS 无法把一串兄弟行合并成一张卡片，
+   所以这里的引言是“齐边方角”版本；圆角与 22px 内缩只存在于阅读视图。 */
+.markdown-source-view.mod-cm6 .cm-line.HyperMD-quote {
+    background-color: var(--bb-amber-ground);
+    color: var(--bb-ink);
+    padding-inline: 18px;
+}
+
+.markdown-source-view.mod-cm6 .cm-quote {
+    color: var(--bb-ink);
+    font-style: normal;
+}
+
+/* =====================================================================
+   10 · 代码
+   行内代码 = 薄荷“贴片”；代码块 = 暖纸卡片（2px 浅砂边 + 3px 平投影）。
+   实时预览没有“卡片”这个元素，代码块是若干 .HyperMD-codeblock 行，
+   于是卡片效果由首/末行拼出来：首行上边框、末行下边框 + 3px 投影。
+   ===================================================================== */
+
+/* --- 行内代码（阅读视图） --- */
+.markdown-rendered code {
+    font-family: var(--bb-code-mono);
+    font-size: 0.9em;
+    color: var(--bb-code-mint);
+    background: var(--bb-code-mint-bg);
+    padding: 2px 8px;
+    border: 1.5px solid var(--bb-code-mint-line);
+    border-radius: 6px;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+}
+
+.markdown-rendered pre code {
+    color: var(--bb-code-text);
+    background: transparent;
+    border: none;
+    padding: 0;
+    border-radius: 0;
+    font-size: 0.92em;
+}
+
+/* --- 行内代码（实时预览）：只给非格式符的那一段上贴片色；内边距与阅读视图对齐 --- */
+.markdown-source-view.mod-cm6 .cm-inline-code {
+    color: var(--bb-code-mint);
+    background-color: var(--bb-code-mint-bg);
+    border-color: var(--bb-code-mint-line);
+    font-family: var(--bb-code-mono);
+    font-size: 0.9em;
+    border-radius: 6px;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+}
+
+.markdown-source-view.mod-cm6 .cm-inline-code:not(.cm-formatting) {
+    padding: 2px 8px;
+    border-width: 1.5px;
+}
+
+.markdown-source-view.mod-cm6 .cm-inline-code.cm-formatting {
+    color: var(--bb-code-mint);
+    background-color: transparent;
+    border-color: transparent;
+}
+
+/* --- 代码块：暖纸卡片 --- */
+.markdown-rendered pre {
+    background: var(--bb-code-bg);
+    border: var(--bb-code-border-w) solid var(--bb-code-border);
+    border-radius: var(--bb-code-radius);
+    padding: var(--bb-code-pad);
+    margin: 1em 0;
+    box-shadow: 0 3px 0 0 var(--bb-code-shadow);
+    font-family: var(--bb-code-mono);
+    font-size: 0.92em;
+    line-height: var(--bb-code-line-height);
+    color: var(--bb-code-text);
+    white-space: pre;
+}
+
+/* 复制按钮：落进暖纸卡片，不抢戏 */
+.markdown-rendered button.copy-code-button {
+    background-color: var(--bb-code-bg);
+    border: 1px solid var(--bb-code-border);
+    border-radius: var(--bb-radius-sm);
+    color: var(--bb-code-muted);
+    box-shadow: none;
+    font-family: var(--bb-font);
+    font-size: 11px;
+}
+
+.markdown-rendered button.copy-code-button:hover {
+    background-color: var(--bb-code-mint-bg);
+    border-color: var(--bb-code-mint-line);
+    color: var(--bb-code-mint);
+}
+
+/* --- 代码块（实时预览）：Obsidian 用独立的背景层拼卡片，
+       行本身不画边框，所以这里只给背景层补上“3px 平投影” --- */
+.markdown-source-view.mod-cm6 .HyperMD-codeblock-bg {
+    background-color: var(--bb-code-bg);
+    border-color: var(--bb-code-border);
+    border-width: 0 var(--bb-code-border-w) 0 var(--bb-code-border-w);
+    box-shadow: none;
+}
+
+.markdown-source-view.mod-cm6 .HyperMD-codeblock-begin-bg {
+    border-width: var(--bb-code-border-w) var(--bb-code-border-w) 0 var(--bb-code-border-w);
+}
+
+.markdown-source-view.mod-cm6 .HyperMD-codeblock-end-bg {
+    border-width: 0 var(--bb-code-border-w) var(--bb-code-border-w) var(--bb-code-border-w);
+    box-shadow: 0 3px 0 0 var(--bb-code-shadow);   /* 卡片自己的 3px 平投影 */
+}
+
+.markdown-source-view.mod-cm6 .cm-line.HyperMD-codeblock {
+    color: var(--bb-code-text);
+    font-family: var(--bb-code-mono);
+    font-size: 0.92em;
+    line-height: var(--bb-code-line-height);
+}
+
+/* 源码模式（实时预览关闭）里代码是纯文本、没有 .HyperMD-codeblock-bg 背景层，
+   所以那边不需要卡片投影——也就不需要任何额外规则；这里保留说明。 */
+
+/* --- 语法高亮（Prism token，阅读视图与实时预览共用） --- */
+.cm-s-obsidian .cm-keyword,
+.token.keyword,
+.token.control-flow,
+.markdown-rendered .token.keyword {
+    color: var(--bb-code-keyword);
+    font-weight: 700;
+}
+
+.cm-s-obsidian .cm-atom,
+.cm-s-obsidian .cm-number,
+.token.number,
+.token.boolean,
+.token.atom {
+    color: var(--bb-code-number);
+}
+
+.cm-s-obsidian .cm-def,
+.token.function,
+.token.class-name,
+.token.builtin {
+    color: var(--bb-code-mint);
+}
+
+.cm-s-obsidian .cm-property,
+.token.property,
+.token.attr-name {
+    color: var(--bb-code-mint);
+}
+
+.cm-s-obsidian .cm-variable,
+.cm-s-obsidian .cm-variable-2,
+.cm-s-obsidian .cm-variable-3,
+.token.variable {
+    color: var(--bb-code-text);
+}
+
+.cm-s-obsidian .cm-operator,
+.token.operator {
+    color: var(--bb-code-text-main);
+}
+
+.cm-s-obsidian .cm-string,
+.token.string,
+.token.char {
+    color: var(--bb-code-string);
+}
+
+.cm-s-obsidian .cm-string-2,
+.token.string-2 {
+    color: var(--bb-code-string2);
+}
+
+.cm-s-obsidian .cm-comment,
+.token.comment,
+.token.prolog,
+.token.doctype,
+.token.cdata {
+    color: var(--bb-code-comment);
+    font-style: italic;
+}
+
+.cm-s-obsidian .cm-tag,
+.token.tag,
+.token.selector {
+    color: var(--bb-code-keyword);
+}
+
+.cm-s-obsidian .cm-attribute,
+.token.attr-value {
+    color: var(--bb-code-number);
+}
+
+.cm-s-obsidian .cm-bracket,
+.token.punctuation {
+    color: var(--bb-code-text-2);
+}
+
+.cm-s-obsidian .cm-builtin,
+.cm-s-obsidian .cm-qualifier {
+    color: var(--bb-code-mint);
+}
+
+.cm-s-obsidian .cm-meta,
+.token.meta,
+.token.annotation {
+    color: var(--bb-code-muted);
+}
+
+.cm-s-obsidian .cm-hmd-codeblock {
+    color: var(--bb-code-text);
+}
+
+/* 代码区选中：黄色选中底 + 深棕字（正文选中仍是暖砂） */
+.markdown-rendered pre ::selection,
+.markdown-source-view.mod-cm6 .cm-line.HyperMD-codeblock ::selection {
+    background: var(--bb-code-focus);
+    color: var(--bb-code-text-main);
+}
+
+/* 数学 */
+.markdown-rendered .math,
+.markdown-rendered .MathJax,
+mjx-container {
+    color: var(--bb-ink);
+}
+
+/* =====================================================================
+   11 · 分隔线：短一截的 1px 结构线 + 小号定标（与 H1 的标尺区分）
+   ===================================================================== */
+.markdown-rendered hr {
+    border: 0;
+    height: 14px;
+    width: 100%;
+    margin: 2.8em auto;
+    background-color: transparent;
+    background-image: var(--bb-mark-hr),
+        linear-gradient(var(--bb-line), var(--bb-line));
+    background-repeat: no-repeat, no-repeat;
+    background-position: center bottom, center bottom;
+    background-size: 48px 14px, 60% 1px;
+}
+
+/* 实时预览：--- 渲染成 .hr 组件（内含一条 <hr>），用同一条短标尺替代默认长线 */
+.markdown-source-view.mod-cm6 .hr {
+    height: 14px;
+    align-items: flex-end;
+    margin: 2.4em 0;
+    background-image: var(--bb-mark-hr),
+        linear-gradient(var(--bb-line), var(--bb-line));
+    background-repeat: no-repeat, no-repeat;
+    background-position: center bottom, center bottom;
+    background-size: 48px 14px, 60% 1px;
+}
+
+.markdown-source-view.mod-cm6 .hr > hr,
+.markdown-source-view.mod-cm6 hr {
+    border: none;
+    background: transparent;
+    height: 0;
+    margin: 0;
+}
+
+/* =====================================================================
+   12 · 表格：墨底云白字表头 + 雾灰斑马 + 暖砂 hover
+   颜色走 --table-* 变量（见第 2 节），形状在这里补齐。
+   Obsidian 里表格有两套宿主：阅读视图的 .markdown-rendered，
+   以及实时预览表格 widget 里的 .cm-html-embed / .cm-table-widget，
+   所以这里统一用 :is() 把三者一起收进来。
+   ===================================================================== */
+:is(.markdown-rendered, .cm-html-embed, .cm-table-widget) table {
+    border-collapse: separate;
+    border-spacing: 0;
+    margin: 1.4em auto;
+    border: 1px solid var(--bb-line-strong);
+    border-radius: var(--bb-radius);
+    overflow: hidden;
+    box-shadow: none;
+}
+
+:is(.markdown-rendered, .cm-html-embed, .cm-table-widget) th {
+    background: var(--bb-invert-bg);
+    color: var(--bb-invert-ink);
+    font-family: var(--bb-font-display);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    padding: 9px 14px;
+    text-align: start;
+    border: none;
+}
+
+:is(.markdown-rendered, .cm-html-embed, .cm-table-widget) td {
+    padding: 9px 14px;
+    border: none;
+    border-top: 1px solid var(--bb-line-faint);
+    color: var(--bb-ink);
+}
+
+/* 实时预览的单元格把内边距放在 .table-cell-wrapper 上，单独补齐（加 th/td 提高权重） */
+.markdown-source-view.mod-cm6 .cm-table-widget th > .table-cell-wrapper,
+.markdown-source-view.mod-cm6 .cm-table-widget td > .table-cell-wrapper {
+    padding: 9px 14px;
+}
+
+.markdown-source-view.mod-cm6 .cm-html-embed th > .table-cell-wrapper,
+.markdown-source-view.mod-cm6 .cm-html-embed td > .table-cell-wrapper {
+    padding: 9px 14px;
+}
+
+/* 斑马与 hover 交给 --table-row-alt-* / --table-row-background-hover，
+   这里不要给 td 铺底色，否则行底色永远看不到。 */
+:is(.markdown-rendered, .cm-html-embed, .cm-table-widget) tbody tr {
+    background-color: transparent;
+}
+
+:is(.markdown-rendered, .cm-html-embed, .cm-table-widget) tbody tr:nth-child(odd) {
+    background-color: var(--bb-mist);
+}
+
+:is(.markdown-rendered, .cm-html-embed, .cm-table-widget) tbody tr:hover {
+    background-color: var(--bb-amber-tint);
+}
+
+:is(.markdown-rendered, .cm-html-embed, .cm-table-widget) table ::selection {
+    background: var(--bb-invert-bg);
+    color: var(--bb-invert-ink);
+}
+
+/* 圆角容器：阅读视图与实时预览都用 .table-wrapper 包一层 */
+.markdown-rendered .table-wrapper,
+.markdown-rendered .table-wrapper > table,
+.cm-table-widget .table-wrapper,
+.cm-table-widget .table-wrapper > table {
+    border-radius: var(--bb-radius);
+}
+
+/* =====================================================================
+   13 · 图片 / 嵌入笔记 / 脚注
+   ===================================================================== */
+.markdown-rendered img,
+.markdown-source-view.mod-cm6 .image-embed img {
+    max-width: 100%;
+    border-radius: var(--bb-radius-sm);
+    border: 1px solid var(--bb-line);
+    box-shadow: none;
+}
+
+.markdown-rendered p > img:only-child,
+.markdown-rendered .image-embed img,
+.markdown-source-view.mod-cm6 .image-embed img {
+    display: block;
+    margin: 1.4em auto;
+}
+
+.markdown-rendered .image-embed.is-loaded {
+    border-radius: var(--bb-radius-sm);
+}
+
+/* 嵌入笔记：雾灰底 + 1px 结构线，像贴上的另一张图版 */
+.markdown-embed {
+    margin: 1.2em 0;
+    padding: 14px 18px;
+    background: var(--bb-mist);
+    border: 1px solid var(--bb-line);
+    border-radius: var(--bb-radius);
+}
+
+.markdown-embed-title,
+.embed-title {
+    color: var(--bb-ink);
+    font-family: var(--bb-font-display);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.markdown-embed-link {
+    color: var(--bb-clay);
+}
+
+/* 脚注区 */
+.markdown-rendered .footnotes {
+    border-top: 1px solid var(--bb-line);
+    margin-top: 2.4em;
+    padding-top: 1em;
+    color: var(--bb-ink-soft);
+}
+
+/* 非笔记类嵌入（PDF / 音视频 / 白板）：同样贴一张带细墨边的图版 */
+.internal-embed:not(.image-embed):not(.markdown-embed) {
+    border: 1px solid var(--bb-line);
+    border-radius: var(--bb-radius);
+    overflow: hidden;
+}
+
+/* =====================================================================
+   14 · 选中 / 焦点
+   ===================================================================== */
+::selection {
+    background: var(--bb-amber);
+    color: var(--bb-on-amber);
+}
+
+/* 实时预览的选中是独立的一层（.cm-selectionBackground），它只改背景不改字色，
+   所以底色必须走 --text-selection：浅色版实心砂、深色版 30% 洗染，
+   否则夜里的云白字压在实心砂上只有 1.94:1。 */
+.markdown-source-view.mod-cm6 .cm-selectionBackground,
+.markdown-source-view.mod-cm6 .cm-selectionLayer .cm-selectionBackground,
+.markdown-source-view.mod-cm6 ::selection,
+.markdown-preview-view ::selection {
+    background-color: var(--text-selection);
+}
+
+.cm-focused {
+    outline: none;
+}
+
+:focus-visible,
+.markdown-rendered a:focus-visible,
+button:focus-visible,
+input:focus-visible {
+    outline: 2px solid var(--bb-ink);
+    outline-offset: 2px;
+}
+
+/* 搜索命中：只画在 Obsidian 真正有盒子的那一层（> div），
+   否则容器与遮罩各上一遍暖砂，颜色会比 ==mark== 更深一档。 */
+.search-result-file-matched-text,
+.markdown-rendered .search-highlight > div,
+.cm-s-obsidian .obsidian-search-match-highlight {
+    background-color: var(--bb-amber);
+    color: var(--bb-on-amber);
+    border-radius: var(--bb-radius-xs);
+}
+
+.markdown-rendered .search-highlight > div {
+    box-shadow: none;
+    opacity: 1;
+}
+
+.cm-s-obsidian .obsidian-search-match-highlight {
+    box-shadow: 0 0 0 1px var(--bb-clay);
+}
+
+/* =====================================================================
+   15 · Obsidian 外壳：侧栏 / 丝带 / 标签页 / 状态栏
+   绘图台是雾灰的，纸面是云白的，页脚整条石墨——与 Typora 版一致。
+   ===================================================================== */
+.workspace-ribbon,
+.workspace-ribbon.mod-left.is-collapsed,
+.workspace-ribbon.mod-right.is-collapsed {
+    background-color: var(--bb-mist) !important;
+    border-color: var(--bb-line);
+}
+
+.side-dock-ribbon-action,
+.workspace-ribbon .clickable-icon {
+    color: var(--bb-ink-muted);
+}
+
+.side-dock-ribbon-action:hover,
+.workspace-ribbon .clickable-icon:hover {
+    color: var(--bb-ink);
+}
+
+.workspace-tab-header-container {
+    background-color: var(--bb-mist);
+    border-bottom: 1px solid var(--bb-line);
+}
+
+.workspace-tab-header {
+    color: var(--bb-ink-muted);
+    font-family: var(--bb-font);
+}
+
+/* Obsidian 自己的标签页规则带 .workspace-tab-header-container 前缀（权重 0,3,0/0,3,1），
+   这里同样加前缀（hover 再加 body 前缀追平 0,3,1），赤陶下划线才不会被盖掉。 */
+body .workspace-tab-header-container .workspace-tab-header:hover {
+    color: var(--bb-ink);
+}
+
+.workspace-tab-header-container .workspace-tab-header.is-active {
+    background-color: var(--bb-paper);
+    color: var(--bb-ink);
+    box-shadow: inset 0 -2px 0 var(--bb-clay);
+    border-radius: var(--bb-radius-sm) var(--bb-radius-sm) 0 0;
+}
+
+.workspace-tab-header-container .workspace-tab-header.is-active .workspace-tab-header-inner-title {
+    font-weight: 700;
+}
+
+/* 只有 Markdown 视图的容器跟着纸面走；侧栏的雾灰底交给 --background-secondary，
+   否则文件树、大纲会一起被刷成云白，灰底层次就没了。 */
+.workspace-leaf-content[data-type="markdown"] .view-content {
+    background-color: var(--bb-canvas);
+}
+
+/* 状态栏：整条石墨，云白字 */
+.status-bar {
+    background-color: var(--bb-invert-bg) !important;
+    color: var(--bb-invert-ink) !important;
+    border-top: 0 !important;
+    font-family: var(--bb-font);
+    font-size: 12px;
+    letter-spacing: 0.04em;
+}
+
+.status-bar-item {
+    color: var(--bb-footer-ink) !important;
+}
+
+.status-bar-item.mod-clickable:hover {
+    color: var(--bb-amber) !important;
+}
+
+.status-bar ::selection {
+    background: var(--bb-invert-ink);
+    color: var(--bb-invert-bg);
+}
+
+/* 标题栏（自绘窗口时） */
+.titlebar,
+.titlebar-inner {
+    background-color: var(--bb-mist);
+    border-color: var(--bb-line);
+}
+
+/* =====================================================================
+   16 · 文件列表 / 大纲 / 搜索结果
+   ===================================================================== */
+.nav-file-title,
+.nav-folder-title,
+.tree-item-self {
+    color: var(--bb-ink-soft);
+    border-radius: var(--bb-radius-xs);
+}
+
+.nav-file-title:hover,
+.nav-folder-title:hover,
+.tree-item-self:hover {
+    color: var(--bb-ink) !important;
+}
+
+.nav-file-title.is-active,
+.nav-file-title.is-selected,
+.tree-item-self.is-active,
+.tree-item-self.is-selected {
+    background-color: var(--bb-invert-bg) !important;
+    color: var(--bb-invert-ink) !important;
+    font-weight: 700;
+}
+
+.nav-file-title.is-active .tree-item-inner,
+.nav-file-title.is-selected .tree-item-inner,
+.tree-item-self.is-selected .tree-item-inner {
+    color: var(--bb-invert-ink) !important;
+}
+
+.nav-folder-title-content,
+.tree-item-inner {
+    letter-spacing: 0.01em;
+}
+
+.nav-action-button,
+.clickable-icon {
+    color: var(--bb-ink-muted);
+    border-radius: var(--bb-radius-xs);
+}
+
+.nav-action-button:hover,
+.clickable-icon:hover {
+    background-color: var(--bb-hover);
+    color: var(--bb-ink);
+}
+
+.search-result-file-title {
+    color: var(--bb-ink);
+    font-weight: 700;
+}
+
+.search-result-file-matches {
+    color: var(--bb-ink-muted);
+}
+
+.tree-item-flair,
+.nav-file-tag {
+    background-color: var(--bb-hover);
+    color: var(--bb-ink-muted);
+    border-radius: var(--bb-radius-xs);
+    font-size: 10px;
+    letter-spacing: 0.04em;
+}
+
+/* 侧栏笔记使用窄边距与小一号的纸面 */
+.mod-left-split .markdown-source-view.mod-cm6 .cm-scroller,
+.mod-right-split .markdown-source-view.mod-cm6 .cm-scroller,
+.mod-left-split .markdown-preview-view,
+.mod-right-split .markdown-preview-view {
+    --file-margins-x: 8px;
+    --file-margins-y: 8px;
+    --bb-sheet-pad-x: 16px;
+    --bb-sheet-pad-top: 16px;
+    --bb-sheet-pad-bottom: 24px;
+}
+
+/* =====================================================================
+   17 · 输入框 / 按钮 / 命令面板 / 菜单 / 提示
+   方块化 + 反白悬停：把 Typora 版的控件语言搬过来。
+   ===================================================================== */
+input[type="text"],
+input[type="search"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+textarea,
+.search-input-container input {
+    background: var(--bb-paper);
+    border: 1px solid var(--bb-line-strong);
+    border-radius: var(--bb-radius-sm);
+    color: var(--bb-ink);
+    box-shadow: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+input[type="text"]:focus,
+input[type="search"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="number"]:focus,
+textarea:focus,
+.search-input-container input:focus {
+    border-color: var(--bb-ink);
+    box-shadow: 0 0 0 3px var(--bb-focus-halo);
+    outline: none;
+}
+
+/* 复选框/单选框已经有 Obsidian 自己的 box-shadow 焦点环，别叠成双环 */
+input[type="checkbox"]:focus-visible,
+input[type="radio"]:focus-visible {
+    box-shadow: none;
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: var(--bb-ink-muted);
+}
+
+button,
+.btn,
+.mod-cta {
+    font-family: var(--bb-font);
+    font-weight: 700;
+    border-radius: var(--bb-radius-sm);
+    transition: background-color 0.15s ease, border-color 0.15s ease,
+                color 0.15s ease, transform 0.15s ease;
+}
+
+button:not(.clickable-icon):not(.mod-cta):not(.mod-warning):not(.mod-destructive) {
+    background: var(--bb-paper);
+    border: 1px solid var(--bb-line-strong);
+    box-shadow: none;
+    color: var(--bb-ink);
+}
+
+button:not(.clickable-icon):not(.mod-cta):not(.mod-warning):not(.mod-destructive):hover {
+    background: var(--bb-mist);
+    border-color: var(--bb-ink);
+    color: var(--bb-ink);
+}
+
+button:active {
+    transform: translateY(1px);
+}
+
+/* 主按钮：浅色版石墨底云白字，hover 转赤陶；
+   深色版换成暖砂实心（最深石墨贴在夜纸上只有 1.4:1，会像洞）。 */
+button.mod-cta {
+    background-color: var(--bb-cta-bg);
+    border: 1px solid var(--bb-cta-bg);
+    color: var(--bb-cta-ink);
+}
+
+button.mod-cta:hover {
+    background-color: var(--bb-cta-hover-bg);
+    border-color: var(--bb-cta-hover-bg);
+    color: var(--bb-cta-hover-ink);
+}
+
+button.mod-warning,
+button.mod-destructive {
+    background-color: var(--bb-clay);
+    border-color: var(--bb-clay);
+    color: var(--bb-on-clay);
+}
+
+/* 命令面板 / 快速切换 */
+.prompt {
+    background-color: var(--bb-paper);
+    border: 1px solid var(--bb-line-strong);
+    border-radius: var(--bb-radius-lg);
+    box-shadow: var(--bb-shadow-float);
+}
+
+.prompt-input-container,
+.prompt .prompt-input {
+    background-color: var(--bb-paper);
+    color: var(--bb-ink);
+    font-family: var(--bb-font);
+}
+
+.prompt .prompt-input::placeholder {
+    color: var(--bb-ink-muted);
+}
+
+.suggestion-item {
+    border-radius: var(--bb-radius-xs);
+    color: var(--bb-ink-soft);
+}
+
+.suggestion-item.is-selected {
+    background-color: var(--bb-invert-bg);
+    color: var(--bb-invert-ink);
+}
+
+.suggestion-item.is-selected .suggestion-note,
+.suggestion-item.is-selected .suggestion-hotkey {
+    color: var(--bb-invert-ink);
+    opacity: 0.8;
+}
+
+.suggestion-highlight {
+    color: var(--bb-clay) !important;
+    font-weight: 700;
+}
+
+.suggestion-item.is-selected .suggestion-highlight {
+    color: var(--bb-invert-ink) !important;
+    text-decoration: underline;
+}
+
+/* 下拉菜单 / 右键菜单 */
+.menu {
+    background-color: var(--bb-paper);
+    border: 1px solid var(--bb-line-strong);
+    border-radius: var(--bb-radius);
+    box-shadow: var(--bb-shadow-float);
+    font-family: var(--bb-font);
+}
+
+.menu-item {
+    color: var(--bb-ink);
+    border-radius: var(--bb-radius-xs);
+}
+
+.menu-item:hover,
+.menu-item.selected {
+    background-color: var(--bb-amber-tint);
+    color: var(--bb-ink);
+}
+
+.menu-separator,
+.menu-item.mod-separator {
+    border-top: 1px solid var(--bb-line-faint);
+}
+
+/* 模态框 */
+.modal {
+    background-color: var(--bb-paper);
+    border: 1px solid var(--bb-line-strong);
+    border-radius: var(--bb-radius-lg);
+    box-shadow: var(--bb-shadow-float);
+    color: var(--bb-ink);
+}
+
+.modal-title {
+    font-family: var(--bb-font-display);
+    font-weight: 800;
+    letter-spacing: 0.01em;
+    color: var(--bb-ink);
+}
+
+.modal-close-button {
+    color: var(--bb-ink-muted);
+}
+
+/* 提示条 */
+.tooltip {
+    background-color: var(--bb-invert-bg);
+    color: var(--bb-invert-ink);
+    border-radius: var(--bb-radius-sm);
+    box-shadow: var(--bb-shadow-float);
+    font-family: var(--bb-font);
+    font-size: 12px;
+    letter-spacing: 0.02em;
+}
+
+.notice {
+    background-color: var(--bb-invert-bg);
+    color: var(--bb-invert-ink);
+    border-radius: var(--bb-radius-sm);
+    box-shadow: var(--bb-shadow-float);
+}
+
+/* 设置页 */
+.setting-item {
+    border-top: 1px solid var(--bb-line-faint);
+}
+
+.setting-item-name {
+    color: var(--bb-ink);
+    font-weight: 600;
+}
+
+.setting-item-description {
+    color: var(--bb-ink-muted);
+}
+
+/* 开关与滑块 */
+.checkbox-container {
+    background-color: var(--color-base-30);
+    border-radius: 999px;
+}
+
+.checkbox-container.is-enabled {
+    background-color: var(--bb-cta-bg);
+}
+
+input[type="range"] {
+    accent-color: var(--bb-clay);
+}
+
+/* =====================================================================
+   18 · 属性面板（frontmatter）
+   Typora 版没有对应物；这里按“雾灰贴条 + 1px 结构线”的语言新建。
+   ===================================================================== */
+.metadata-container {
+    background-color: var(--bb-mist);
+    border: 1px solid var(--bb-line);
+    border-radius: var(--bb-radius);
+    padding: 10px 14px;
+    margin-bottom: 1.4em;
+    font-family: var(--bb-font);
+}
+
+.metadata-property {
+    border-radius: var(--bb-radius-xs);
+}
+
+.metadata-property-key,
+.metadata-property .metadata-property-key-input {
+    color: var(--bb-ink-muted);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.metadata-property-value,
+.metadata-input-longtext,
+.metadata-property input,
+.metadata-property select {
+    color: var(--bb-ink);
+    font-family: var(--bb-font);
+}
+
+.metadata-property:hover,
+.metadata-property:focus-within {
+    background-color: var(--bb-hover);
+}
+
+.metadata-property-key:hover {
+    color: var(--bb-ink);
+}
+
+/* =====================================================================
+   19 · Callout：只用五色与六色谱（暖砂/赤陶/赭金/橄榄/梅褐/暖灰）
+   ===================================================================== */
+.callout {
+    border-radius: var(--bb-radius);
+    border-width: 1px;
+    border-style: solid;
+    padding: 16px 20px;
+    margin: 1.3em 0;
+}
+
+.callout-title {
+    font-family: var(--bb-font-display);
+    font-weight: 700;
+    letter-spacing: 0.02em;
+    color: var(--bb-ink);
+}
+
+.callout-content {
+    color: var(--bb-ink);
+}
+
+.callout-fold {
+    color: var(--bb-ink-muted);
+}
+
+/* =====================================================================
+   20 · 滚动条：雾灰轨道 + 墨色滑块
+   ===================================================================== */
+body.styled-scrollbars ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+    background-color: transparent;
+}
+
+body.styled-scrollbars ::-webkit-scrollbar-track {
+    background-color: transparent;
+}
+
+body.styled-scrollbars ::-webkit-scrollbar-thumb {
+    background-color: var(--bb-line-strong);
+    border-radius: 999px;
+    border: 2px solid transparent;
+    background-clip: content-box;
+}
+
+body.styled-scrollbars ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--bb-ink);
+}
+
+body.styled-scrollbars ::-webkit-scrollbar-corner {
+    background-color: transparent;
+}
+
+/* =====================================================================
+   21 · 空状态 / 关系图 / 画布
+   ===================================================================== */
+.empty-state-title {
+    color: var(--bb-h1);
+    font-family: var(--bb-font-display);
+    font-weight: 800;
+}
+
+.empty-state-action {
+    color: var(--bb-ink-muted);
+}
+
+.empty-state-action:hover {
+    color: var(--bb-ink);
+}
+
+.workspace-leaf-content[data-type="graph"] .view-content {
+    background-color: var(--bb-mist);
+}
+
+.canvas-wrapper {
+    background-color: var(--bb-mist);
+}
+
+/* =====================================================================
+   22 · 打印 / PDF：去掉网格与画框，只留墨
+   ===================================================================== */
+@media print {
+    @page {
+        margin: 12mm 14mm;
+    }
+
+    /* 导出 PDF 时深色模式会带着夜调色板去印白纸（浅字白底 1.18:1），
+       所以打印一律把深色令牌重钉回浅色调色板。 */
+    body.theme-dark {
+        --bb-ink:             #1D1D1F;
+        --bb-paper:           #FBFBFD;
+        --bb-mist:            #F5F5F7;
+        --bb-canvas:          #F5F5F7;
+        --bb-invert-bg:       #1D1D1F;
+        --bb-invert-ink:      #FBFBFD;
+        --bb-on-amber:        #1D1D1F;
+        --bb-on-clay:         #FBFBFD;
+        --bb-amber:           #D8A24B;
+        --bb-amber-ground:    #D8A24B;
+        --bb-clay:            #BF4800;
+        --bb-clay-deep:       #A64105;
+        --bb-accent-hover:    #A64105;
+        --bb-tag-ink:         #A64105;
+        --bb-tag-ink-hover:   #8E3604;
+        --bb-cta-bg:          #1D1D1F;
+        --bb-cta-ink:         #FBFBFD;
+        --bb-cta-hover-bg:    #A64105;
+        --bb-cta-hover-ink:   #FBFBFD;
+        --bb-footer-ink:      rgba(251, 251, 253, 0.82);
+        --bb-band-mid:        rgba(245, 245, 247, 0.62);
+        --bb-band-end:        rgba(245, 245, 247, 0);
+        --bb-h1:              #1D1D1F;
+        --bb-h2:              #BF4800;
+        --bb-h3:              #8A5E14;
+        --bb-h4:              #55602F;
+        --bb-h5:              #6B4A5B;
+        --bb-h6:              #6B645D;
+        --bb-ink-soft:        rgba(29, 29, 31, 0.86);
+        --bb-ink-muted:       rgba(29, 29, 31, 0.70);
+        --bb-faint:           #6E6E74;
+        --bb-line:            rgba(29, 29, 31, 0.28);
+        --bb-line-strong:     rgba(29, 29, 31, 0.55);
+        --bb-line-faint:      rgba(29, 29, 31, 0.12);
+        --bb-selection:       #D8A24B;
+        --bb-code-bg:         #efe9d6;
+        --bb-code-border:     #c9bea4;
+        --bb-code-shadow:     #d4c9b4;
+        --bb-code-text:       #725d42;
+        --bb-code-text-main:  #794f27;
+        --bb-code-text-2:     #9f927d;
+        --bb-code-muted:      #8a7b66;
+        --bb-code-comment:    #a2947c;
+        --bb-code-mint:       #11a89b;
+        --bb-code-mint-bg:    #e6f9f6;
+        --bb-code-mint-line:  #cdeeea;
+        --bb-code-focus:      #ffcc00;
+        --bb-code-keyword:    #c94444;
+        --bb-code-number:     #dba90e;
+        --bb-code-string:     #5a9e1e;
+        --bb-code-string2:    #4a8517;
+        --bb-code-em:         #c97d1c;
+    }
+
+    body,
+    body.theme-light,
+    body.theme-dark,
+    .markdown-preview-view,
+    .print .markdown-preview-view {
+        background-color: #ffffff !important;
+        background-image: none !important;
+        color: #1D1D1F !important;
+    }
+
+    .markdown-preview-sizer,
+    .print .markdown-preview-view .markdown-preview-sizer {
+        background: #ffffff !important;
+        border: none !important;
+        border-radius: 0 !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        max-width: 100% !important;
+    }
+
+    .markdown-rendered pre,
+    .markdown-rendered blockquote,
+    .markdown-rendered table,
+    .callout {
+        box-shadow: none !important;
+    }
+
+    .markdown-rendered pre {
+        border-width: 1px !important;
+        break-inside: avoid;
+    }
+
+    .markdown-rendered h1,
+    .markdown-rendered h2,
+    .markdown-rendered h3,
+    .markdown-rendered h4,
+    .markdown-rendered h5,
+    .markdown-rendered h6 {
+        break-after: avoid;
+    }
+
+    .status-bar,
+    .workspace-ribbon,
+    .workspace-tab-header-container {
+        display: none !important;
+    }
+}
+
+/* 尊重系统“减少动态效果”设置 */
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+    }
+}
+
+/* =====================================================================
+   23 · 可选：代码区 AA 修复覆盖层
+   源 Typora 主题的代码子色板是“区分度优先”的刻意例外，实测在
+   #efe9d6 暖纸上达不到 WCAG AA（最差的是注释 1.62:1）。
+   迁移时默认保留源色以维持像素级一致性；如果你更看重可读性，
+   把下面这一块取消注释即可——所有比值实测 ≥ 4.5:1，色相不变，只动明度。
+   ===================================================================== */
+/*
+body.theme-light {
+    --bb-code-em:          #925b14;
+    --bb-code-keyword:     #bc3636;
+    --bb-code-comment:     #746647;
+    --bb-code-mint:        #0a665e;
+    --bb-code-number:      #816408;
+    --bb-code-string:      #427416;
+    --bb-code-string2:     #407414;
+    --bb-code-text-2:      #716654;
+    --bb-code-muted:       #726554;
+}
+*/
+
+/* End of theme.css — Graphite Island · Spectrum for Obsidian */
