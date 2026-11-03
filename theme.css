@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Graphite Island · Spectrum — Obsidian Theme
  * 石墨岛 · 光谱 —— 从同名 Typora 主题迁移的 Obsidian 主题。
  *
@@ -1245,11 +1245,12 @@ body .markdown-rendered div:is(.el-blockquote, .el-p, .el-pre, .el-table, .el-ul
     color: var(--bb-ink);
 }
 
+/* 删除线不再单独着色（text-decoration-color 在 1.4.5 基线被判"部分支持"）：
+   线条跟随文字色，仍然看得出被划掉。 */
 .markdown-rendered del,
 .markdown-rendered s,
 .markdown-source-view.mod-cm6 .cm-strikethrough {
     color: var(--bb-ink-muted);
-    text-decoration-color: var(--bb-clay);
 }
 
 /* 高亮：暖砂实心块 + 墨字 */
@@ -1429,7 +1430,6 @@ ol > li::marker {
 .markdown-rendered blockquote s,
 .markdown-rendered blockquote .footnote-ref {
     color: var(--bb-ink-soft);
-    text-decoration-color: var(--bb-ink-soft);
 }
 
 /* 暖砂块里标题回到墨色：彩字压彩底会掉对比度 */
@@ -2505,7 +2505,7 @@ body.styled-scrollbars ::-webkit-scrollbar-corner {
 
     body .markdown-rendered pre {
         border-width: 1px;
-        break-inside: avoid;
+        page-break-inside: avoid;
     }
 
     .markdown-rendered h1,
@@ -2514,7 +2514,7 @@ body.styled-scrollbars ::-webkit-scrollbar-corner {
     .markdown-rendered h4,
     .markdown-rendered h5,
     .markdown-rendered h6 {
-        break-after: avoid;
+        page-break-after: avoid;
     }
 
     body .status-bar,
