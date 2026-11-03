@@ -1392,10 +1392,10 @@ ol > li::marker {
    ===================================================================== */
 .markdown-rendered blockquote {
     margin: 1.3em 0;
-    padding: 16px 22px;
+    padding: 18px 24px;
     background: var(--bb-amber-ground);
     border: 1px solid var(--bb-line-strong);
-    border-radius: var(--bb-radius);
+    border-radius: var(--bb-radius-sm);
     color: var(--bb-ink);
     font-style: normal;
 }
@@ -1412,7 +1412,7 @@ ol > li::marker {
 .markdown-rendered blockquote blockquote {
     background: var(--bb-mist);
     border-color: var(--bb-line);
-    border-radius: var(--bb-radius-sm);
+    border-radius: var(--bb-radius-xs);
 }
 
 .markdown-rendered blockquote mark {
@@ -1455,11 +1455,30 @@ ol > li::marker {
 }
 
 /* 实时预览的引言：逐行给暖砂底。CSS 无法把一串兄弟行合并成一张卡片，
-   所以这里的引言是“齐边方角”版本；圆角与 22px 内缩只存在于阅读视图。 */
+   所以只能按"首行圆上两角、末行圆下两角、中间行方正"拼出一张圆角卡片
+   （每行都圆角的话，行与行接缝处会露出锯齿状缺口）。
+   ：has 不支持时退回方角，不影响可读性。 */
 .markdown-source-view.mod-cm6 .cm-line.HyperMD-quote {
     background-color: var(--bb-amber-ground);
     color: var(--bb-ink);
-    padding-inline: 18px;
+    padding-inline: 20px;
+    border-radius: 0;
+}
+
+/* 引用块首行 */
+.markdown-source-view.mod-cm6 .cm-line:not(.HyperMD-quote) + .cm-line.HyperMD-quote {
+    border-radius: var(--bb-radius-sm) var(--bb-radius-sm) 0 0;
+}
+
+/* 引用块末行 */
+.markdown-source-view.mod-cm6 .cm-line.HyperMD-quote:not(:has(+ .cm-line.HyperMD-quote)) {
+    border-radius: 0 0 var(--bb-radius-sm) var(--bb-radius-sm);
+}
+
+/* 只有一行的引用块：四角全圆 */
+.markdown-source-view.mod-cm6 .cm-line:not(.HyperMD-quote)
+    + .cm-line.HyperMD-quote:not(:has(+ .cm-line.HyperMD-quote)) {
+    border-radius: var(--bb-radius-sm);
 }
 
 .markdown-source-view.mod-cm6 .cm-quote {
