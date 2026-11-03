@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Graphite Island · Spectrum — Obsidian Theme
  * 石墨岛 · 光谱 —— 从同名 Typora 主题迁移的 Obsidian 主题。
  *
@@ -692,7 +692,7 @@ body {
     --tab-text-color-focused-active: var(--bb-ink);
     --tab-text-color-focused-active-current: var(--bb-ink);
     --tab-text-color-focused-highlighted: var(--bb-clay);
-    --tab-outline-color:         var(--bb-line-faint);
+    --tab-outline-color:         var(--bb-line);   /* 标签栏底边线与选中标签描边都吃这个变量 */
     --tab-outline-width:         1px;
     --tab-divider-color:         transparent;
     --tab-radius:                var(--bb-radius-sm);
@@ -1408,7 +1408,6 @@ ol > li::marker {
     padding: 18px 24px;
     background: var(--bb-amber-ground);
     border: 1px solid var(--bb-line-strong);
-    border-radius: var(--bb-radius-sm);
     color: var(--bb-ink);
     font-style: normal;
 }
@@ -1425,7 +1424,6 @@ ol > li::marker {
 .markdown-rendered blockquote blockquote {
     background: var(--bb-mist);
     border-color: var(--bb-line);
-    border-radius: var(--bb-radius-xs);
 }
 
 .markdown-rendered blockquote mark {
@@ -1466,16 +1464,15 @@ ol > li::marker {
     color: var(--bb-invert-ink);
 }
 
-/* 实时预览的引言：逐行给暖砂底 + 20px 内缩 + 4px 圆角（与阅读视图同一档）。
-   每行都是独立的行盒，圆角只能逐行加：效果是色带两端在每条行缝处各留一个小楔
-   （实测 4px 时约 30 像素面积，1x 下几乎看不出来）。想要"真正一张卡片"必须用
-   :has() 判断首/末行，而它失效范围大、会拖累编辑器（商店审核也会警告），
-   所以这里接受这点瑕疵，换干净的 lint 与稳定的编辑性能。 */
+/* 实时预览的引言：逐行给暖砂底 + 20px 内缩，方角。
+   这里每行都是独立的行盒，CSS 没法把它们合成一张卡：逐行圆角会在每条行缝两
+   端留下小楔子，而"只圆首末行"必须用 :has()，它失效范围大、会拖累编辑器。
+   与其留个半吊子圆角，不如方角——色带连续、接缝干净，也和 1px 结构线的语言
+   一致（本主题的几何本来就是直角为主）。 */
 .markdown-source-view.mod-cm6 .cm-line.HyperMD-quote {
     background-color: var(--bb-amber-ground);
     color: var(--bb-ink);
     padding-inline: 20px;
-    border-radius: var(--bb-radius-sm);
 }
 
 .markdown-source-view.mod-cm6 .cm-quote {
@@ -1994,11 +1991,19 @@ body .workspace-tab-header-container .workspace-tab-header:hover {
     color: var(--bb-ink);
 }
 
+/* 选中标签：写成一张"接在纸面上的卡片"——上、左、右三面 1px 线，底边不封口，
+   让标签和下面的纸面连成一片；赤陶下划线压在内侧做强调。
+   注意 box-shadow 是一个属性：这里一并重写就等于接管了 Obsidian 原本用
+   box-shadow 画的那圈描边（它的颜色来自 --tab-outline-color），所以线必须自己补。 */
 .workspace-tab-header-container .workspace-tab-header.is-active {
     background-color: var(--bb-paper);
     color: var(--bb-ink);
-    box-shadow: inset 0 -2px 0 var(--bb-clay);
     border-radius: var(--bb-radius-sm) var(--bb-radius-sm) 0 0;
+    box-shadow:
+        -1px 0 0 var(--bb-line),
+        1px 0 0 var(--bb-line),
+        0 -1px 0 var(--bb-line),
+        inset 0 -2px 0 var(--bb-clay);
 }
 
 .workspace-tab-header-container .workspace-tab-header.is-active .workspace-tab-header-inner-title {
