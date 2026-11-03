@@ -1245,12 +1245,18 @@ body .markdown-rendered div:is(.el-blockquote, .el-p, .el-pre, .el-table, .el-ul
     color: var(--bb-ink);
 }
 
-/* 删除线不再单独着色（text-decoration-color 在 1.4.5 基线被判"部分支持"）：
-   线条跟随文字色，仍然看得出被划掉。 */
+/* 删除线：文字灰墨、线是赤陶。
+   不单独给"线上色"（那条属性在 1.4.5 基线被判部分支持），而是关掉浏览器默认的
+   删除线、自己用 1px 渐变画一条：线的颜色与文字的 currentColor 就此分开。 */
 .markdown-rendered del,
 .markdown-rendered s,
 .markdown-source-view.mod-cm6 .cm-strikethrough {
     color: var(--bb-ink-muted);
+    text-decoration: none;
+    background-image: linear-gradient(var(--bb-clay), var(--bb-clay));
+    background-repeat: no-repeat;
+    background-size: 100% 1px;
+    background-position: 0 0.62em;
 }
 
 /* 高亮：暖砂实心块 + 墨字 */
