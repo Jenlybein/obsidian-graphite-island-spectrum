@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Graphite Island · Spectrum — Obsidian Theme
  * 石墨岛 · 光谱 —— 从同名 Typora 主题迁移的 Obsidian 主题。
  *
@@ -1459,15 +1459,16 @@ ol > li::marker {
     color: var(--bb-invert-ink);
 }
 
-/* 实时预览的引言：逐行给暖砂底 + 20px 内缩 + 2px 微圆角。
-   这里每行都是一个独立的行盒，圆角只能逐行加；半径 2px 时接缝处的缺口在
-   1x 下几乎看不见，到 3px/4px 就会在每条行缝上露出白色小楔子。
-   阅读视图那张卡片是真的一整块，所以那边用 4px。 */
+/* 实时预览的引言：逐行给暖砂底 + 20px 内缩 + 4px 圆角（与阅读视图同一档）。
+   每行都是独立的行盒，圆角只能逐行加：效果是色带两端在每条行缝处各留一个小楔
+   （实测 4px 时约 30 像素面积，1x 下几乎看不出来）。想要"真正一张卡片"必须用
+   :has() 判断首/末行，而它失效范围大、会拖累编辑器（商店审核也会警告），
+   所以这里接受这点瑕疵，换干净的 lint 与稳定的编辑性能。 */
 .markdown-source-view.mod-cm6 .cm-line.HyperMD-quote {
     background-color: var(--bb-amber-ground);
     color: var(--bb-ink);
     padding-inline: 20px;
-    border-radius: var(--bb-radius-xs);
+    border-radius: var(--bb-radius-sm);
 }
 
 .markdown-source-view.mod-cm6 .cm-quote {
@@ -1569,6 +1570,9 @@ ol > li::marker {
 /* --- 代码块（实时预览）：Obsidian 用独立的背景层拼卡片，
        行本身不画边框，所以这里只给背景层补上“3px 平投影” --- */
 .markdown-source-view.mod-cm6 .HyperMD-codeblock-bg {
+    /* Obsidian 给代码行 16px 的 padding-inline-start，而背景层是按行的内容盒定位的，
+       于是卡片左侧会漏出一条纸色空隙。把背景层左沿左移这一个内边距即可。 */
+    left: calc(-1 * var(--size-4-4));
     background-color: var(--bb-code-bg);
     border-color: var(--bb-code-border);
     border-width: 0 var(--bb-code-border-w) 0 var(--bb-code-border-w);
@@ -1584,19 +1588,18 @@ ol > li::marker {
     box-shadow: 0 3px 0 0 var(--bb-code-shadow);   /* 卡片自己的 3px 平投影 */
 }
 
-.markdown-source-view.mod-cm6 .cm-line.HyperMD-codeblock {
+.markdown-source-view.mod-cm6 .cm-line.HyperMD-codeblock:not(.HyperMD-codeblock-begin):not(.HyperMD-codeblock-end) {
     color: var(--bb-code-text);
     font-family: var(--bb-code-mono);
     font-size: 0.92em;
     line-height: var(--bb-code-line-height);
 
-    /* 信纸线：画在正文盒下沿（content-box 保证线与文字左对齐、不越出卡片内边距） */
+    /* 信纸线：铺满整行宽度（与卡片同宽），落在行盒下沿。
+       跳过 ``` 围栏那两行，否则卡片顶上会多出一条游离的线。 */
     background-image: linear-gradient(var(--bb-code-shadow), var(--bb-code-shadow));
     background-size: 100% 1px;
     background-position: 0 100%;
     background-repeat: no-repeat;
-    background-origin: content-box;
-    background-clip: content-box;
 }
 
 /* 源码模式（实时预览关闭）里代码是纯文本、没有 .HyperMD-codeblock-bg 背景层，
