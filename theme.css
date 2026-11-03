@@ -2530,14 +2530,27 @@ body.styled-scrollbars ::-webkit-scrollbar-corner {
     }
 }
 
-/* 尊重系统“减少动态效果”设置 */
+/* 尊重系统“减少动态效果”设置。
+   不用 !important：Obsidian 的时长几乎都走 --anim-duration-* 变量，先把变量归零；
+   剩下少量硬编码时长靠重复属性选择器抬高权重（body.theme-*[class][class] = 0,3,1，
+   足以压过界面里 0,1,0–0,2,0 的过渡规则，且不需要 !important）。 */
 @media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
-        transition-duration: 0.01ms !important;
-        animation-duration: 0.01ms !important;
-        animation-iteration-count: 1 !important;
+    body {
+        --anim-duration-superfast: 0.01ms;
+        --anim-duration-fast:      0.01ms;
+        --anim-duration-moderate:  0.01ms;
+        --anim-duration-slow:      0.01ms;
+    }
+
+    body.theme-light[class][class] *,
+    body.theme-dark[class][class] *,
+    body.theme-light[class][class] *::before,
+    body.theme-dark[class][class] *::before,
+    body.theme-light[class][class] *::after,
+    body.theme-dark[class][class] *::after {
+        transition-duration: 0.01ms;
+        animation-duration: 0.01ms;
+        animation-iteration-count: 1;
     }
 }
 
