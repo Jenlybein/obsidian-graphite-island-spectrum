@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Graphite Island · Spectrum — Obsidian Theme
  * 石墨岛 · 光谱 —— 从同名 Typora 主题迁移的 Obsidian 主题。
  *
@@ -805,11 +805,16 @@ body {
     --scrollbar-height:           10px;
     --scrollbar-border-width:     2px;
 
-    /* --- 图标 --- */
-    --icon-color:         var(--bb-ink-muted);
+    /* --- 图标 ---
+       注意别用 ink-muted：Obsidian 还会再乘一个 --icon-opacity(0.85)，
+       两层叠起来只有 ~59% 的墨，在雾灰丝带上就"看不见"了。
+       这里用 ink-soft 并把透明度拉满，图标才和文字一样清楚。 */
+    --icon-color:         var(--bb-ink-soft);
     --icon-color-hover:   var(--bb-ink);
     --icon-color-active:  var(--bb-ink);
     --icon-color-focused: var(--bb-ink);
+    --icon-opacity:       1;
+    --icon-opacity-hover: 1;
 
     /* --- 文档版面：纸面宽度与外边距 --- */
     --file-line-width: var(--bb-sheet-width);
@@ -1953,14 +1958,22 @@ input:focus-visible {
 /* 丝带：颜色全部由 --ribbon-background / --ribbon-background-collapsed 提供，
    这里不写规则——用户改一个变量就能覆盖（官方主题指南也建议少用 !important）。 */
 
+/* 丝带按钮：图标走 ink-soft、悬停压到纸白底上，保证浅深两种模式下都清楚。 */
 .side-dock-ribbon-action,
 .workspace-ribbon .clickable-icon {
-    color: var(--bb-ink-muted);
+    color: var(--bb-ink-soft);
+    opacity: 1;
+}
+
+.side-dock-ribbon-action svg,
+.workspace-ribbon .clickable-icon svg {
+    opacity: 1;
 }
 
 .side-dock-ribbon-action:hover,
 .workspace-ribbon .clickable-icon:hover {
     color: var(--bb-ink);
+    background-color: var(--bb-paper);
 }
 
 .workspace-tab-header-container {
