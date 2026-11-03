@@ -1107,38 +1107,106 @@ body .markdown-rendered div:is(.el-blockquote, .el-p, .el-pre, .el-table, .el-ul
 body .markdown-rendered div:is(.el-blockquote, .el-p, .el-pre, .el-table, .el-ul, .el-ol) + div > h5 { margin-block-start: 1.15em; }
 body .markdown-rendered div:is(.el-blockquote, .el-p, .el-pre, .el-table, .el-ul, .el-ol) + div > h6 { margin-block-start: 1.25em; }
 
-/* 实时预览：CodeMirror 6 对 `.cm-content > *` 施加了 margin: 0 !important，
-   纵向节奏只能自己带 !important 才生效；内边距同时要压过
-   `.cm-s-obsidian .cm-line.HyperMD-header { padding-top: var(--p-spacing) }`，
-   所以六条规则都用 `.markdown-source-view.mod-cm6 .cm-line` 前缀并把 padding 写全。 */
+/* =====================================================================
+   实时预览的标题节奏：只用 padding，绝不用 margin
+   ---------------------------------------------------------------------
+   CodeMirror 6 的行高表只认行盒自己的高度（padding 计入 rect，margin 不计）。
+   在 `.cm-line` 上写 margin，视觉位置会比 CM6 认为的位置多推一段，
+   每过一个标题累积一次——表现就是"越往下点击偏移越明显"：点 A 行，
+   光标落到 B 行，或者干脆命中下面的元素。所以纵向间距一律换算成 padding，
+   装饰记号改用 background-origin: content-box 贴着正文盒定位。
+   ===================================================================== */
+
+/* H1：上下留白用 padding；定标线（三角＋方）画在正文盒下沿 26px 处 */
 .markdown-source-view.mod-cm6 .cm-line.HyperMD-header-1 {
-    margin: 1.35em 0 1.25em !important;
-    padding: 0 0 26px;
+    margin: 0;
+    padding: 1.35em 0 calc(1.25em + 27px);
+    background-image: var(--bb-mark-h1),
+        linear-gradient(var(--bb-line-strong), var(--bb-line-strong));
+    background-repeat: no-repeat, no-repeat;
+    background-size: 96px 26px, 100% 1px;
+    background-position: center calc(100% + 26px), left calc(100% + 26px);
+    background-origin: content-box;
+    background-clip: border-box;
 }
 
+/* H2：色带贴着正文盒画（6px 赤陶竖条 + 雾灰渐变），上下留白用 padding */
 .markdown-source-view.mod-cm6 .cm-line.HyperMD-header-2 {
-    margin: 2.05em 0 0.95em !important;
-    padding: 10px 20px 11px 22px;
+    margin: 0;
+    padding: 2.05em 20px 0.95em 22px;
+    border-left: none;
+    border-radius: 0;
+    background-image:
+        linear-gradient(var(--bb-h2), var(--bb-h2)),
+        linear-gradient(to right,
+            var(--bb-mist) 0%,
+            var(--bb-band-mid) 52%,
+            var(--bb-band-end) 100%);
+    background-repeat: no-repeat, no-repeat;
+    background-size: 6px 100%, 100% 100%;
+    background-position: left top, left top;
+    background-origin: content-box;
+    background-clip: content-box;
 }
 
+/* H3：三角贴正文盒左侧中线，1px 细线落在正文盒下沿 10px 处 */
 .markdown-source-view.mod-cm6 .cm-line.HyperMD-header-3 {
-    margin: 1.75em 0 0.7em !important;
-    padding: 0 0 10px 22px;
+    margin: 0;
+    padding: 1.75em 0 calc(0.7em + 11px) 22px;
+    border-bottom: none;
+    background-image: var(--bb-mark-tri-h3),
+        linear-gradient(var(--bb-line), var(--bb-line));
+    background-repeat: no-repeat, no-repeat;
+    background-size: 14px 12px, 100% 1px;
+    background-position: left center, left calc(100% + 10px);
+    background-origin: content-box;
+    background-clip: border-box;
 }
 
+/* H4：橄榄记号笔横条画在正文盒下沿 8px 处 */
 .markdown-source-view.mod-cm6 .cm-line.HyperMD-header-4 {
-    margin: 1.5em 0 0.5em !important;
-    padding: 0 0 8px;
+    margin: 0;
+    padding: 1.5em 0 calc(0.5em + 11px);
+    background-image: linear-gradient(to right,
+        var(--bb-h4) 0,
+        var(--bb-h4) 44px,
+        transparent 44px);
+    background-repeat: no-repeat;
+    background-size: 100% 3px;
+    background-position: left calc(100% + 8px);
+    background-origin: content-box;
+    background-clip: border-box;
 }
 
+/* H5：贴纸画在行内文字 span 上——行内盒的纵向 padding 不参与行高计算，
+   所以贴纸的 3px 内边距不会干扰 CM6 的行高表；行本身只负责纵向留白 */
 .markdown-source-view.mod-cm6 .cm-line.HyperMD-header-5 {
-    margin: 1.15em 0 0.4em !important;
-    padding: 3px 12px;
+    margin: 0;
+    padding: 1.15em 0 0.4em;
+    background: none;
+    border: none;
+    border-radius: 0;
+    width: auto;
 }
 
+.markdown-source-view.mod-cm6 .HyperMD-header-5 .cm-header-5 {
+    background-color: var(--bb-mist);
+    border: 1px solid var(--bb-h5);
+    border-radius: var(--bb-radius-xs);
+    padding: 3px 12px;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;
+}
+
+/* H6：制图式引线贴正文盒左侧中线 */
 .markdown-source-view.mod-cm6 .cm-line.HyperMD-header-6 {
-    margin: 1.25em 0 0.35em !important;
-    padding: 0.15em 0 0.15em 36px;
+    margin: 0;
+    padding: 1.25em 0 0.35em 36px;
+    background-image: linear-gradient(var(--bb-h6), var(--bb-h6));
+    background-repeat: no-repeat;
+    background-size: 26px 1px;
+    background-position: left center;
+    background-origin: content-box;
 }
 
 /* 标题里的井号与 Markdown 记号：不抢标题色 */
@@ -1630,15 +1698,17 @@ mjx-container {
     background-size: 48px 14px, 60% 1px;
 }
 
-/* 实时预览：--- 渲染成 .hr 组件（内含一条 <hr>），用同一条短标尺替代默认长线 */
+/* 实时预览：--- 渲染成 .hr 组件（内含一条 <hr>），用同一条短标尺替代默认长线。
+   注意这里同样不能用 margin（CM6 不算行盒外的 margin，且 Obsidian 会把它清零）；
+   上下留白改由组件自身高度承担，标尺在正中间，视觉上仍是"上下各空 2.4em"。 */
 .markdown-source-view.mod-cm6 .hr {
-    height: 14px;
-    align-items: flex-end;
-    margin: 2.4em 0;
+    height: calc(14px + 4.8em);
+    margin: 0;
+    align-items: center;
     background-image: var(--bb-mark-hr),
         linear-gradient(var(--bb-line), var(--bb-line));
     background-repeat: no-repeat, no-repeat;
-    background-position: center bottom, center bottom;
+    background-position: center center, center center;
     background-size: 48px 14px, 60% 1px;
 }
 
@@ -1735,10 +1805,20 @@ mjx-container {
 }
 
 .markdown-rendered p > img:only-child,
-.markdown-rendered .image-embed img,
-.markdown-source-view.mod-cm6 .image-embed img {
+.markdown-rendered .image-embed img {
     display: block;
     margin: 1.4em auto;
+}
+
+/* 实时预览里的图片：img 自己的 margin 会塌陷到 widget 外面，CM6 量不到，
+   于是图下面每一次点击都往下偏。留白改由容器 padding 承担（padding 计入 rect）。 */
+.markdown-source-view.mod-cm6 .image-embed {
+    padding: 1.2em 0;
+}
+
+.markdown-source-view.mod-cm6 .image-embed img {
+    display: block;
+    margin: 0 auto;
 }
 
 .markdown-rendered .image-embed.is-loaded {
@@ -1752,6 +1832,12 @@ mjx-container {
     background: var(--bb-mist);
     border: 1px solid var(--bb-line);
     border-radius: var(--bb-radius);
+}
+
+/* 同上：实时预览里改用 padding，不用 margin */
+.markdown-source-view.mod-cm6 .markdown-embed {
+    margin: 0;
+    padding-block: 14px;
 }
 
 .markdown-embed-title,
