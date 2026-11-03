@@ -1,4 +1,4 @@
-# Graphite Island Spectrum · an Obsidian theme
+﻿# Graphite Island Spectrum · an Obsidian theme
 
 > The Typora theme of the same name, ported to Obsidian — sheet of paper on a drafting board,
 > six warm hues for six heading levels, geometry instead of ornament.
@@ -38,6 +38,7 @@ Ported from the Typora theme of the same name (MIT, © 2026 Jenlybein).
 | H4 olive 44px marker bar | `h4` / `.HyperMD-header-4` | 3px underline, first 44px solid |
 | H5 plum “sticker” block | `h5` / `.HyperMD-header-5` | `width: fit-content` block, mist fill, plum outline |
 | H6 letterspaced small caps + lead-in tick | `h6` / `.HyperMD-header-6` | 26px tick, `text-transform: uppercase` |
+| code card ruled like letter paper | `pre` / `.HyperMD-codeblock` | 1px rule under every code line, rhythm taken from the code line-height (Obsidian has no per-line element inside `pre`) |
 | amber blockquote, mist nested blockquote | `blockquote` / `.HyperMD-quote` | quote text keeps the ink colour; headings inside fall back to ink |
 | mint inline-code chip, warm-paper fenced card | `code` / `pre` and `.cm-inline-code` / `HyperMD-codeblock-bg` | 18px radius, 2px sand border, 3px flat shadow |
 | graphite table header, mist zebra, amber hover | `--table-*` | header is `--bb-invert-bg` so it stays a *dark* band in dark mode |

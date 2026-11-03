@@ -1,4 +1,4 @@
-# 石墨岛 · 六色谱 —— Obsidian 主题
+﻿# 石墨岛 · 六色谱 —— Obsidian 主题
 
 > 同名 Typora 主题的 Obsidian 版本：石墨图纸上的暖土六色谱。
 > 浅色模式是原主题的配色，一个色值都没改；深色模式是派生的“石墨岛 · 夜”，
@@ -34,7 +34,7 @@ Obsidian 只需要 `manifest.json` 与 `theme.css`，`README` 与 `LICENSE` 是�
 | H5 梅褐“贴纸”标签块 | `h5` / `.HyperMD-header-5` | `width: fit-content` 块，雾灰底 + 梅褐描边 |
 | H6 字距小标签 + 26px 引线 | `h6` / `.HyperMD-header-6` | `text-transform: uppercase` |
 | 暖砂引言块、嵌套引言落回雾灰 | `blockquote` / `.HyperMD-quote` | 块内文字保持墨色，彩色标题一律回墨 |
-| 薄荷行内代码 / 暖纸代码卡片 | `code` / `pre`，`.cm-inline-code` / `HyperMD-codeblock-bg` | 18px 圆角、2px 浅砂边、3px 平投影 |
+| 薄荷行内代码 / 暖纸代码卡片 | `code` / `pre`，`.cm-inline-code` / `HyperMD-codeblock-bg` | 18px 圆角、2px 浅砂边、3px 平投影、每行底部 1px 信纸线 |
 | 墨底云白字表头 + 雾灰斑马 + 暖砂 hover | `--table-*` | 表头用 `--bb-invert-bg`，所以深色模式下仍是“深色带”而不是白带 |
 | 方形任务复选框 | `--checkbox-*` | Obsidian 的勾是 mask 图，方形只能靠 `--checkbox-radius: 2px` |
 | 整条石墨页脚 | `.status-bar` | |
