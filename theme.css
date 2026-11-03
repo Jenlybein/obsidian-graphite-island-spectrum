@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Graphite Island · Spectrum — Obsidian Theme
  * 石墨岛 · 光谱 —— 从同名 Typora 主题迁移的 Obsidian 主题。
  *
@@ -1130,7 +1130,10 @@ body .markdown-rendered div:is(.el-blockquote, .el-p, .el-pre, .el-table, .el-ul
     background-clip: border-box;
 }
 
-/* H2：色带贴着正文盒画（6px 赤陶竖条 + 雾灰渐变），上下留白用 padding */
+/* H2：色带铺满整行（含左右内边距），6px 赤陶竖条压在行首；上下留白用 padding。
+   注意：记号要画在“内边距盒”里，所以 clip 用 padding-box，横向位置用负偏移
+   把记号推回行首——实时预览里 `##` 记号是隐藏的，正文正好从 content-box 左沿开始，
+   锚在 content-box 上会让竖条压住首字。 */
 .markdown-source-view.mod-cm6 .cm-line.HyperMD-header-2 {
     margin: 0;
     padding: 2.05em 20px 0.95em 22px;
@@ -1143,13 +1146,13 @@ body .markdown-rendered div:is(.el-blockquote, .el-p, .el-pre, .el-table, .el-ul
             var(--bb-band-mid) 52%,
             var(--bb-band-end) 100%);
     background-repeat: no-repeat, no-repeat;
-    background-size: 6px 100%, 100% 100%;
-    background-position: left top, left top;
+    background-size: 6px 100%, calc(100% + 42px) 100%;
+    background-position: -22px top, -22px top;
     background-origin: content-box;
-    background-clip: content-box;
+    background-clip: padding-box;
 }
 
-/* H3：三角贴正文盒左侧中线，1px 细线落在正文盒下沿 10px 处 */
+/* H3：三角落在行首（内边距盒里），1px 细线自左贯到正文右沿、落在正文下沿 10px 处 */
 .markdown-source-view.mod-cm6 .cm-line.HyperMD-header-3 {
     margin: 0;
     padding: 1.75em 0 calc(0.7em + 11px) 22px;
@@ -1157,10 +1160,10 @@ body .markdown-rendered div:is(.el-blockquote, .el-p, .el-pre, .el-table, .el-ul
     background-image: var(--bb-mark-tri-h3),
         linear-gradient(var(--bb-line), var(--bb-line));
     background-repeat: no-repeat, no-repeat;
-    background-size: 14px 12px, 100% 1px;
-    background-position: left center, left calc(100% + 10px);
+    background-size: 14px 12px, calc(100% + 22px) 1px;
+    background-position: -22px center, -22px calc(100% + 10px);
     background-origin: content-box;
-    background-clip: border-box;
+    background-clip: padding-box;
 }
 
 /* H4：橄榄记号笔横条画在正文盒下沿 8px 处 */
@@ -1198,15 +1201,16 @@ body .markdown-rendered div:is(.el-blockquote, .el-p, .el-pre, .el-table, .el-ul
     box-decoration-break: clone;
 }
 
-/* H6：制图式引线贴正文盒左侧中线 */
+/* H6：制图式引线落在行首（内边距盒里），与文字中线对齐 */
 .markdown-source-view.mod-cm6 .cm-line.HyperMD-header-6 {
     margin: 0;
     padding: 1.25em 0 0.35em 36px;
     background-image: linear-gradient(var(--bb-h6), var(--bb-h6));
     background-repeat: no-repeat;
     background-size: 26px 1px;
-    background-position: left center;
+    background-position: -36px center;
     background-origin: content-box;
+    background-clip: padding-box;
 }
 
 /* 标题里的井号与 Markdown 记号：不抢标题色 */
