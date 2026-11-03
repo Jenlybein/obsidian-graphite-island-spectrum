@@ -91,11 +91,10 @@ L 62–78% band the light version uses at L 28–40%.
    contrast — so it is preserved. If you prefer AA, uncomment the repair overlay at the end of
    `theme.css`: same hues, 9 brightness-only changes, all pairs ≥ 4.5:1. The dark palette already
    meets AA everywhere.
-6. **Live-preview blockquotes are square.** CSS cannot merge a run of sibling CodeMirror lines
-   into one card; rounding only the outer corners would need `:has()` to tell the first and last
-   line apart, and `:has()` invalidates too broadly for a live editor (the community directory
-   warns about it). So live preview keeps a 20px-inset amber band and the rounded card lives in
-   reading view.
+6. **Live-preview blockquotes carry a 2px radius, reading view 4px.** A run of CodeMirror lines
+   cannot become one card, so live preview rounds each line separately; at 2px the notches where
+   the lines meet are invisible, at 3–4px they turn into visible wedges. Reading view is a real
+   single block, so it keeps the 4px radius (and the 20/24px inset).
 7. **H5 is shrink-to-fit in both views** (`width: fit-content`). In live preview that leaves the
    remainder of the line clickable but visually empty.
 8. **The sheet is 860px wide including its 56/64/96 padding** — the literal `#write max-width` from

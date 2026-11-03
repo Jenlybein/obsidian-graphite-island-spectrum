@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Graphite Island · Spectrum — Obsidian Theme
  * 石墨岛 · 光谱 —— 从同名 Typora 主题迁移的 Obsidian 主题。
  *
@@ -1453,14 +1453,15 @@ ol > li::marker {
     color: var(--bb-invert-ink);
 }
 
-/* 实时预览的引言：逐行给暖砂底 + 20px 内缩。
-   圆角只存在于阅读视图——实时预览里要"只圆外角"必须用 has 选择器判断首/末行，
-   而这种选择器的失效范围很大、会拖累编辑器（商店的自动审核也会警告）；
-   每行都圆角又会在行与行接缝处露出缺口，所以这里保持方角。 */
+/* 实时预览的引言：逐行给暖砂底 + 20px 内缩 + 2px 微圆角。
+   这里每行都是一个独立的行盒，圆角只能逐行加；半径 2px 时接缝处的缺口在
+   1x 下几乎看不见，到 3px/4px 就会在每条行缝上露出白色小楔子。
+   阅读视图那张卡片是真的一整块，所以那边用 4px。 */
 .markdown-source-view.mod-cm6 .cm-line.HyperMD-quote {
     background-color: var(--bb-amber-ground);
     color: var(--bb-ink);
     padding-inline: 20px;
+    border-radius: var(--bb-radius-xs);
 }
 
 .markdown-source-view.mod-cm6 .cm-quote {
