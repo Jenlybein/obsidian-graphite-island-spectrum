@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Graphite Island · Spectrum — Obsidian Theme
  * 石墨岛 · 光谱 —— 从同名 Typora 主题迁移的 Obsidian 主题。
  *
@@ -1228,7 +1228,7 @@ body .markdown-rendered div:is(.el-blockquote, .el-p, .el-pre, .el-table, .el-ul
    会把 --hN-color 的六色谱压成墨色（实时预览里标题就全黑了）。
    标题自己带色，其余行继承绘图台/纸面的墨色即可。 */
 .markdown-rendered p,
-.markdown-source-view.mod-cm6 .cm-line:not([class*="HyperMD-header"]) {
+.markdown-source-view.mod-cm6 .cm-line:not([class*="HyperMD-header"]):not(.HyperMD-codeblock) {
     color: var(--bb-ink);
 }
 
@@ -1583,7 +1583,11 @@ ol > li::marker {
 /* 源码模式（实时预览关闭）里代码是纯文本、没有 .HyperMD-codeblock-bg 背景层，
    所以那边不需要卡片投影——也就不需要任何额外规则；这里保留说明。 */
 
-/* --- 语法高亮（Prism token，阅读视图与实时预览共用） --- */
+/* --- 语法高亮（Prism token，阅读视图与实时预览共用） ---
+   注意：不要在 token 元素上再写"统一颜色"。实时预览里每个 token 的 span 同时带
+   `cm-hmd-codeblock` 和语法类（cm-keyword / cm-string …），一条权重同级的统一色
+   规则只要排在后面，就会把整块代码压成单色（表现为"完全没有高亮"）。
+   基色只写在代码行（父级）上，让 token 自己的规则去上色。 */
 .cm-s-obsidian .cm-keyword,
 .token.keyword,
 .token.control-flow,
@@ -1672,9 +1676,6 @@ ol > li::marker {
     color: var(--bb-code-muted);
 }
 
-.cm-s-obsidian .cm-hmd-codeblock {
-    color: var(--bb-code-text);
-}
 
 /* 代码区选中：黄色选中底 + 深棕字（正文选中仍是暖砂） */
 .markdown-rendered pre ::selection,
