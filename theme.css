@@ -677,8 +677,10 @@ body {
     /* --- 丝带 / 标签页 / 标题栏 / 状态栏 --- */
     --ribbon-background:          var(--bb-mist);
     --ribbon-background-collapsed: var(--bb-mist);
-    --titlebar-background:         var(--bb-mist);
-    --titlebar-background-focused: var(--bb-mist);
+    /* 标题栏是 position: fixed 的覆盖层，底色必须透明，否则会盖住标签栏与左上按钮。
+       标签栏自己的底色由 .workspace-tab-header-container 负责（见第 15 节）。 */
+    --titlebar-background:         transparent;
+    --titlebar-background-focused: transparent;
     --titlebar-text-color:         var(--bb-ink-muted);
     --titlebar-text-color-focused: var(--bb-ink);
     --titlebar-border-width:       0px;
@@ -2031,11 +2033,13 @@ body .workspace-tab-header-container .workspace-tab-header:hover {
     color: var(--bb-invert-bg);
 }
 
-/* 标题栏（自绘窗口时） */
+/* 标题栏（自绘无边框窗口时）。
+   注意：这一层是盖在工作区之上的拖拽层，标签栏与左上按钮位于它下面，
+   一旦给它刷不透明底色，就会把标签栏整条"盖没"。所以这里必须透明。 */
 .titlebar,
 .titlebar-inner {
-    background-color: var(--bb-mist);
-    border-color: var(--bb-line);
+    background-color: transparent;
+    border-color: transparent;
 }
 
 /* =====================================================================
