@@ -1,4 +1,4 @@
-/*
+﻿/*
  * Graphite Island · Spectrum — Obsidian Theme
  * 石墨岛 · 光谱 —— 从同名 Typora 主题迁移的 Obsidian 主题。
  *
@@ -941,7 +941,10 @@ body.theme-dark {
     border-radius: 0;
     box-shadow: none;
     padding: 0;
-    max-width: 100% !important;   /* 要压过 .is-readable-line-width 的 860px 上限 */
+    /* 画布节点里不该有 860px 的纸宽上限：把变量本身改掉，
+       比拼 max-width 更干净（原先这里用了 !important）。 */
+    --file-line-width: 100%;
+    max-width: 100%;
 }
 
 /* =====================================================================
@@ -1197,8 +1200,6 @@ body .markdown-rendered div:is(.el-blockquote, .el-p, .el-pre, .el-table, .el-ul
     border: 1px solid var(--bb-h5);
     border-radius: var(--bb-radius-xs);
     padding: 3px 12px;
-    -webkit-box-decoration-break: clone;
-    box-decoration-break: clone;
 }
 
 /* H6：制图式引线落在行首（内边距盒里），与文字中线对齐 */
@@ -1259,8 +1260,6 @@ body .markdown-rendered div:is(.el-blockquote, .el-p, .el-pre, .el-table, .el-ul
     color: var(--bb-on-amber);
     padding: 0 4px;
     border-radius: var(--bb-radius-xs);
-    -webkit-box-decoration-break: clone;
-    box-decoration-break: clone;
 }
 
 /* =====================================================================
@@ -1454,31 +1453,14 @@ ol > li::marker {
     color: var(--bb-invert-ink);
 }
 
-/* 实时预览的引言：逐行给暖砂底。CSS 无法把一串兄弟行合并成一张卡片，
-   所以只能按"首行圆上两角、末行圆下两角、中间行方正"拼出一张圆角卡片
-   （每行都圆角的话，行与行接缝处会露出锯齿状缺口）。
-   ：has 不支持时退回方角，不影响可读性。 */
+/* 实时预览的引言：逐行给暖砂底 + 20px 内缩。
+   圆角只存在于阅读视图——实时预览里要"只圆外角"必须用 has 选择器判断首/末行，
+   而这种选择器的失效范围很大、会拖累编辑器（商店的自动审核也会警告）；
+   每行都圆角又会在行与行接缝处露出缺口，所以这里保持方角。 */
 .markdown-source-view.mod-cm6 .cm-line.HyperMD-quote {
     background-color: var(--bb-amber-ground);
     color: var(--bb-ink);
     padding-inline: 20px;
-    border-radius: 0;
-}
-
-/* 引用块首行 */
-.markdown-source-view.mod-cm6 .cm-line:not(.HyperMD-quote) + .cm-line.HyperMD-quote {
-    border-radius: var(--bb-radius-sm) var(--bb-radius-sm) 0 0;
-}
-
-/* 引用块末行 */
-.markdown-source-view.mod-cm6 .cm-line.HyperMD-quote:not(:has(+ .cm-line.HyperMD-quote)) {
-    border-radius: 0 0 var(--bb-radius-sm) var(--bb-radius-sm);
-}
-
-/* 只有一行的引用块：四角全圆 */
-.markdown-source-view.mod-cm6 .cm-line:not(.HyperMD-quote)
-    + .cm-line.HyperMD-quote:not(:has(+ .cm-line.HyperMD-quote)) {
-    border-radius: var(--bb-radius-sm);
 }
 
 .markdown-source-view.mod-cm6 .cm-quote {
@@ -1502,8 +1484,6 @@ ol > li::marker {
     padding: 2px 8px;
     border: 1.5px solid var(--bb-code-mint-line);
     border-radius: 6px;
-    -webkit-box-decoration-break: clone;
-    box-decoration-break: clone;
 }
 
 .markdown-rendered pre code {
@@ -1523,8 +1503,6 @@ ol > li::marker {
     font-family: var(--bb-code-mono);
     font-size: 0.9em;
     border-radius: 6px;
-    -webkit-box-decoration-break: clone;
-    box-decoration-break: clone;
 }
 
 .markdown-source-view.mod-cm6 .cm-inline-code:not(.cm-formatting) {
@@ -1700,8 +1678,7 @@ ol > li::marker {
 
 /* 数学 */
 .markdown-rendered .math,
-.markdown-rendered .MathJax,
-mjx-container {
+.markdown-rendered .MathJax {
     color: var(--bb-ink);
 }
 
@@ -2028,13 +2005,7 @@ body .workspace-tab-header-container .workspace-tab-header:hover {
     border-radius: var(--bb-radius-xs);
 }
 
-.nav-file-title:hover,
-.nav-folder-title:hover,
-.tree-item-self:hover {
-    color: var(--bb-ink) !important;
-}
-
-/* 文件树：hover / 选中的颜色由 --nav-item-* 变量提供（见第 2 节），
+/* 文件树 hover / 选中的颜色由 --nav-item-* 变量提供（见第 2 节），
    这里只调字重，避免和用户片段打架。 */
 .nav-file-title.is-active,
 .nav-file-title.is-selected,
@@ -2501,35 +2472,38 @@ body.styled-scrollbars ::-webkit-scrollbar-corner {
         --bb-code-em:         #c97d1c;
     }
 
+    /* 打印时把纸面还原成一整张白页：提高选择器权重即可，不用 !important。
+       （样式表本身在 app.css 之后加载，同权重下后来的规则胜出。） */
     body,
     body.theme-light,
     body.theme-dark,
-    .markdown-preview-view,
-    .print .markdown-preview-view {
-        background-color: #ffffff !important;
-        background-image: none !important;
-        color: #1D1D1F !important;
+    body .markdown-preview-view,
+    body.print .markdown-preview-view {
+        background-color: #ffffff;
+        background-image: none;
+        color: #1D1D1F;
     }
 
-    .markdown-preview-sizer,
-    .print .markdown-preview-view .markdown-preview-sizer {
-        background: #ffffff !important;
-        border: none !important;
-        border-radius: 0 !important;
-        box-shadow: none !important;
-        padding: 0 !important;
-        max-width: 100% !important;
+    body .markdown-preview-sizer,
+    body.print .markdown-preview-view .markdown-preview-sizer {
+        background: #ffffff;
+        border: none;
+        border-radius: 0;
+        box-shadow: none;
+        padding: 0;
+        max-width: 100%;
+        --file-line-width: 100%;
     }
 
-    .markdown-rendered pre,
-    .markdown-rendered blockquote,
-    .markdown-rendered table,
-    .callout {
-        box-shadow: none !important;
+    body .markdown-rendered pre,
+    body .markdown-rendered blockquote,
+    body .markdown-rendered table,
+    body .callout {
+        box-shadow: none;
     }
 
-    .markdown-rendered pre {
-        border-width: 1px !important;
+    body .markdown-rendered pre {
+        border-width: 1px;
         break-inside: avoid;
     }
 
@@ -2542,10 +2516,10 @@ body.styled-scrollbars ::-webkit-scrollbar-corner {
         break-after: avoid;
     }
 
-    .status-bar,
-    .workspace-ribbon,
-    .workspace-tab-header-container {
-        display: none !important;
+    body .status-bar,
+    body .workspace-ribbon,
+    body .workspace-tab-header-container {
+        display: none;
     }
 }
 
