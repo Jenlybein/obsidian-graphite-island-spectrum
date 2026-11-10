@@ -1724,10 +1724,15 @@ ol > li::marker {
     color: var(--bb-code-text-main);
 }
 
-/* 数学 */
+/* 数学：颜色必须继承上下文。
+   在正文里它继承墨色，在墨底表头里继承云白——一旦写死成 ink，
+   表头单元格里的 $x_2$ 这类公式就会变成"墨字压墨底"而整段隐形。
+   （横表头不支持渲染公式时，Obsidian 会原样留 $...$ 字面文本，同样是 .math 元素。） */
 .markdown-rendered .math,
-.markdown-rendered .MathJax {
-    color: var(--bb-ink);
+.markdown-rendered .MathJax,
+.markdown-rendered mjx-container,
+.markdown-rendered mjx-container * {
+    color: inherit;
 }
 
 /* =====================================================================
