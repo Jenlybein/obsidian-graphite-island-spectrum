@@ -509,10 +509,13 @@ body {
     --p-spacing: 0.75em;
     --p-spacing-empty: 0em;   /* 标题与首段之间的间距由标题自身 margin 负责，避免叠加 */
 
-    /* --- 行内 --- */
-    --bold-color:    var(--bb-ink);
+    /* --- 行内 ---
+       加粗/斜体只改字重与字形，颜色必须继承上下文（用 inherit 而不是 ink）：
+       app.css 给 b/strong 写了 `color: var(--bold-color)`，一旦钉成墨色，
+       墨底表头里的加粗文字就会整片隐形，只剩一条空黑带。 */
+    --bold-color:    inherit;
     --bold-weight:   800;
-    --italic-color:  var(--bb-ink);
+    --italic-color:  inherit;
     --italic-weight: 400;
 
     /* --- 链接：墨色细线，hover 反白成块 --- */
@@ -1239,10 +1242,12 @@ body .markdown-rendered div:is(.el-blockquote, .el-p, .el-pre, .el-table, .el-ul
     color: var(--bb-ink);
 }
 
+/* 加粗只改字重，颜色必须继承上下文：
+   这里一旦写死 color: var(--bb-ink)，墨底表头里的加粗文字就会变成"墨字压墨底"而整片隐形
+   （阅读视图里表头是墨底云白字，加粗后文字消失，只剩一条空黑带）。 */
 .markdown-rendered strong,
 .markdown-rendered b,
 .markdown-source-view.mod-cm6 .cm-strong {
-    color: var(--bb-ink);
     font-weight: 800;
 }
 
@@ -1809,10 +1814,11 @@ ol > li::marker {
     padding: 9px 14px;
 }
 
-/* 斑马与 hover 交给 --table-row-alt-* / --table-row-background-hover，
-   这里不要给 td 铺底色，否则行底色永远看不到。 */
+/* 斑马与 hover 交给 --table-row-alt-* / --table-row-background-hover。
+   tbody 行的基础色必须是纸白，不能是 transparent：表格若落在暖砂引言块里，
+   transparent 会让砂底直接透上来，变成"白 / 琥珀"打补丁的斑马。 */
 :is(.markdown-rendered, .cm-html-embed, .cm-table-widget) tbody tr {
-    background-color: transparent;
+    background-color: var(--bb-paper);
 }
 
 :is(.markdown-rendered, .cm-html-embed, .cm-table-widget) tbody tr:nth-child(odd) {
@@ -1825,6 +1831,14 @@ ol > li::marker {
 
 :is(.markdown-rendered, .cm-html-embed, .cm-table-widget) table ::selection {
     background: var(--bb-invert-bg);
+    color: var(--bb-invert-ink);
+}
+
+/* 表头文字再钉一道：墨底必须配云白字。用 body 前缀抬高权重，
+   避免某些 Obsidian 版本里 --table-header-color 被上下文改写成墨色而"隐形"。 */
+body .markdown-rendered th,
+body .cm-table-widget th,
+body .cm-html-embed th {
     color: var(--bb-invert-ink);
 }
 
