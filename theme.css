@@ -1,4 +1,4 @@
-﻿/*
+/*
  * Graphite Island · Spectrum — Obsidian Theme
  * 石墨岛 · 光谱 —— 从同名 Typora 主题迁移的 Obsidian 主题。
  *
@@ -143,7 +143,12 @@ body.theme-light {
     --bb-tag-ink:         #A64105;                /* 标签文字（暖砂底上要压深一档） */
     --bb-tag-ink-hover:   #8E3604;
     --bb-faint:           #6E6E74;                /* 比 base-50 深一档，弱化文字也守 4.5:1 */
-    --bb-selection:       #D8A24B;                /* 选中底色：浅色版是实心砂 */
+    /* 选中：石墨洗染（不是实心暖砂）。
+       暖砂既是引言块底、又是 mark 高亮的颜色，选中再用暖砂就等于"选中 = 高亮 = 引言块"，
+       三种语义糊成一片。改用半透明墨，纸面 / 雾灰 / 暖砂 / 暖纸代码卡上都能压出可见的深一档，
+       且不与任何暖色撞；墨底（表头、反白块、状态栏）另用云白洗染。 */
+    --bb-selection:       rgba(29, 29, 31, 0.22);
+    --bb-selection-on-dark: rgba(251, 251, 253, 0.30);
 
     /* 40px 图纸网格（小格 40px，大格 200px） */
     --bb-grid-line:       rgba(29, 29, 31, 0.13);
@@ -301,8 +306,10 @@ body.theme-dark {
     --bb-tag-ink:         #EB8B4C;
     --bb-tag-ink-hover:   #F0A26A;
     --bb-faint:           #96969F;
-    /* 选中底色：暗底上不能用实心砂（会把云白字压成 1.94:1），改成 30% 砂的洗染 */
-    --bb-selection:       rgba(216, 162, 75, 0.30);
+    /* 选中：夜里反过来——用云白洗染（提亮一档），同样避开暖砂，
+       否则夜间引言块本身就是 28% 暖砂，选中再叠 30% 暖砂几乎看不出边界。 */
+    --bb-selection:       rgba(236, 236, 239, 0.22);
+    --bb-selection-on-dark: rgba(236, 236, 239, 0.32);
 
     /* 40px 图纸网格（夜图纸：雾白线，比纸面亮一点点；实测 1.30 / 1.68，与浅色版同量级） */
     --bb-grid-line:       rgba(236, 236, 239, 0.10);
@@ -1463,11 +1470,8 @@ ol > li::marker {
     background: transparent;
 }
 
-/* 暖砂块里的选中反白 */
-.markdown-rendered blockquote ::selection {
-    background: var(--bb-invert-bg);
-    color: var(--bb-invert-ink);
-}
+/* 暖砂块里的选中：不再需要单独反白——石墨洗染压在暖砂上会自然压深一档，
+   与正文里的选中是同一个观感，读者不用重新辨认。 */
 
 /* 实时预览的引言：逐行给暖砂底 + 20px 内缩，方角。
    这里每行都是独立的行盒，CSS 没法把它们合成一张卡：逐行圆角会在每条行缝两
@@ -1832,8 +1836,12 @@ ol > li::marker {
 }
 
 :is(.markdown-rendered, .cm-html-embed, .cm-table-widget) table ::selection {
-    background: var(--bb-invert-bg);
-    color: var(--bb-invert-ink);
+    background: var(--bb-selection);
+}
+
+/* 表头是墨底，石墨洗染压不出反差，换成云白洗染 */
+:is(.markdown-rendered, .cm-html-embed, .cm-table-widget) th ::selection {
+    background: var(--bb-selection-on-dark);
 }
 
 /* 表头文字再钉一道：墨底必须配云白字。用 body 前缀抬高权重，
@@ -1930,8 +1938,7 @@ body .cm-html-embed th {
    14 · 选中 / 焦点
    ===================================================================== */
 ::selection {
-    background: var(--bb-amber);
-    color: var(--bb-on-amber);
+    background: var(--bb-selection);
 }
 
 /* 实时预览的选中是独立的一层（.cm-selectionBackground），它只改背景不改字色，
@@ -2059,8 +2066,7 @@ body .workspace-tab-header-container .workspace-tab-header:hover {
 }
 
 .status-bar ::selection {
-    background: var(--bb-invert-ink);
-    color: var(--bb-invert-bg);
+    background: var(--bb-selection-on-dark);
 }
 
 /* 标题栏（自绘无边框窗口时）。
@@ -2094,6 +2100,28 @@ body .workspace-tab-header-container .workspace-tab-header:hover {
 .nav-folder-title-content,
 .tree-item-inner {
     letter-spacing: 0.01em;
+}
+
+/* 重命名输入框（文件树里就地改名 / 新建文件夹）。   app.css 在 focus-within 时套用 --nav-item-color-active，而那个令牌是给"选中文件"
+   （墨色块上的纸白字）准备的——重命名框的底却是纸色，于是纸白字压纸白底，整段隐形。
+   这里给重命名框自己的纸底 + 墨字，两种模式都成立；顺带收掉我们那条全局
+   :focus-visible 黑描边，让 Obsidian 自己的赤陶聚焦环显示出来。 */
+body .tree-item-self.is-being-renamed,
+body .tree-item-self.is-being-renamed:focus-within {
+    color: var(--bb-ink);
+    background-color: var(--bb-paper);
+}
+
+.tree-item-self.is-being-renamed [contenteditable="true"]:focus-visible {
+    outline: none;
+}
+
+/* 选中的文件是墨色块（云白字），石墨洗染在上面压不出反差，同样换云白洗染 */
+.tree-item-self.is-active ::selection,
+.tree-item-self.is-selected ::selection,
+.nav-file-title.is-active ::selection,
+.nav-file-title.is-selected ::selection {
+    background: var(--bb-selection-on-dark);
 }
 
 .nav-action-button,

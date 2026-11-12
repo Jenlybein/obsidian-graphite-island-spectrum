@@ -69,6 +69,7 @@ Not an inverted filter — the roles were re-derived so the design survives a da
 | blockquote ground | solid `#D8A24B` | amber at 28% over the sheet |
 | primary button | ink fill, paper text | amber fill, `#1B1B1E` text (a `#0E0E10` fill on the sheet is only 1.40:1 — it would read as a hole) |
 | code card | `#efe9d6` | `#302B23` (same “warm paper pasted on the sheet” register, 1.14:1 vs 1.17:1) |
+| text selection | graphite wash 22% (10.3:1 on the sheet, 5.0:1 on the quote block) | paper wash 22% |
 
 The six heading hues keep their hue angles and only move in lightness, into the same
 L 62–78% band the light version uses at L 28–40%.
